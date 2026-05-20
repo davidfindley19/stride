@@ -113,6 +113,19 @@ def fetch_all_runs():
         data = resp.json()
         activities.extend([a for a in data if a.get("type") in TRAINING_TYPES])
         if len(data) < 50: break
+
+def fetch_runs_only():
+    """Fetch only running activities from Strava — used for pace/performance metrics."""
+    RUN_TYPES = {"Run", "VirtualRun", "TrailRun"}
+    activities = []
+    for page in range(1, 5):
+        resp = requests.get(f"{STRAVA_API_BASE}/athlete/activities",
+            headers=get_headers(), params={"per_page":50,"page":page})
+        if resp.status_code != 200: break
+        data = resp.json()
+        activities.extend([a for a in data if a.get("type") in RUN_TYPES])
+        if len(data) < 50: break
+    return activities
     return activities
 
 def compute_stats(runs):
@@ -391,7 +404,7 @@ def api_stats():
     cached = cache_get(cache_key)
     if cached:
         return jsonify(cached)
-    stats = compute_stats(fetch_all_runs())
+    stats = compute_stats(fetch_runs_only())
     stats["athlete"] = session.get("athlete", {})
     cache_set(cache_key, stats)
     return jsonify(stats)
