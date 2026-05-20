@@ -1007,7 +1007,7 @@ def api_performance():
         cached = cache_get(cache_key)
         if cached:
             return jsonify(cached)
-        runs = fetch_all_runs()
+        runs = fetch_runs_only()
         if not runs: return jsonify({"error":"no runs found"}), 404
         now = datetime.now()
         for r in runs:
