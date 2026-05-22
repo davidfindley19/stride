@@ -113,6 +113,7 @@ def fetch_all_runs():
         data = resp.json()
         activities.extend([a for a in data if a.get("type") in TRAINING_TYPES])
         if len(data) < 50: break
+    return activities
 
 def fetch_runs_only():
     """Fetch only running activities from Strava — used for pace/performance metrics."""
@@ -125,7 +126,6 @@ def fetch_runs_only():
         data = resp.json()
         activities.extend([a for a in data if a.get("type") in RUN_TYPES])
         if len(data) < 50: break
-    return activities
     return activities
 
 def compute_stats(runs):
@@ -986,6 +986,22 @@ def api_fuel_weight():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route("/api/meals")
+def api_meals():
+    """Serve the meals database JSON."""
+    if not session.get("access_token"):
+        return jsonify({"error": "not authenticated"}), 401
+    try:
+        import json as _json
+        meals_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "meals.json")
+        with open(meals_path) as f:
+            return jsonify(_json.load(f))
+    except FileNotFoundError:
+        return jsonify({"error": "meals.json not found — add it to your Stride folder"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/api/debug/config")
 def api_debug_config():
     cid = CLIENT_ID()
@@ -1632,7 +1648,37 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
 @media(max-width:600px){
   .train-cache-bar{flex-wrap:wrap;gap:6px}
   .train-day{min-width:130px}
-}</style></head><body>
+}
+.meals-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.meals-select{background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.68rem;padding:4px 8px;border-radius:2px;cursor:pointer}
+.meals-select:focus{outline:none;border-color:var(--orange)}
+.meals-day-tabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:12px;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.meals-day-tab{font-family:var(--mono);font-size:.62rem;text-transform:uppercase;letter-spacing:.06em;padding:5px 12px;border-radius:2px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s}
+.meals-day-tab:hover{border-color:var(--border2);color:var(--muted2)}
+.meals-day-tab.active{background:var(--orange);border-color:var(--orange);color:#fff}
+.meals-day-tab .dot{width:6px;height:6px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+.meal-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:680px){.meal-grid{grid-template-columns:1fr}}
+.meal-card-s{background:var(--surface);border:1px solid var(--border);border-radius:3px;overflow:hidden;transition:border-color .15s;cursor:pointer}
+.meal-card-s:hover{border-color:var(--border2)}
+.meal-card-s.expanded{border-color:var(--orange)}
+.meal-card-header{display:flex;justify-content:space-between;align-items:center;padding:7px 11px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.meal-card-label{font-family:var(--mono);font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.meal-card-macros{display:flex;gap:6px;font-family:var(--mono);font-size:.6rem}
+.meal-card-body{padding:10px 12px}
+.meal-card-name{font-family:var(--sans);font-size:.92rem;font-weight:700;margin-bottom:3px;color:var(--text)}
+.meal-card-desc{font-size:.7rem;color:var(--muted2);line-height:1.7;margin-bottom:6px}
+.meal-card-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+.meal-tag{font-family:var(--mono);font-size:.56rem;padding:2px 5px;border-radius:2px;border:1px solid var(--border2);color:var(--muted)}
+.meal-expand{background:var(--bg2);border:1px solid var(--border);border-radius:2px;padding:8px 10px;margin-top:6px}
+.meal-expand-title{font-family:var(--mono);font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:var(--orange);margin-bottom:5px}
+.meal-expand ul{padding-left:14px;font-size:.68rem;color:var(--muted2);line-height:1.9}
+.meal-expand ol{padding-left:14px;font-size:.68rem;color:var(--muted2);line-height:1.9}
+.meals-day-summary{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:8px 12px;background:var(--surface);border:1px solid var(--border);border-radius:3px;font-family:var(--mono);font-size:.65rem}
+.mds-item{display:flex;flex-direction:column;align-items:center}
+.mds-val{font-size:.9rem;font-weight:600;font-family:var(--sans)}
+.mds-label{font-size:.55rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:1px}
+</style></head><body>
 
 <div class="topbar">
   <div class="topbar-l">
@@ -1652,6 +1698,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
   <div class="tab" data-tab="info" onclick="switchTab('info')">Guide</div>
   <div class="tab" data-tab="fuel" onclick="switchTab('fuel')">Fuel</div>
   <div class="tab" data-tab="train" onclick="switchTab('train')">Train</div>
+  <div class="tab" data-tab="meals" onclick="switchTab('meals')">Meals</div>
 </div>
 
 <div class="loading" id="loading">
@@ -2047,6 +2094,51 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
 
   </div>
 </div><!-- /train tab -->
+<!-- ══════════════════════════ MEALS TAB ══════════════════════════ -->
+<div class="tab-page" id="tab-meals">
+
+  <div class="perf-loading" id="mealsLoading">
+    <div class="spin"></div>
+    <div class="lmsg">loading meal plans...</div>
+  </div>
+
+  <div id="mealsContent" style="display:none">
+
+    <!-- Controls -->
+    <div class="row" style="margin-bottom:6px">
+      <div class="panel">
+        <div class="ph" style="justify-content:space-between;flex-wrap:wrap;gap:8px">
+          <span class="pt">Meal Plans</span>
+          <div class="meals-controls">
+            <select id="mealsPlanSelect" class="meals-select" onchange="onMealsPlanChange()">
+              <option value="standard_7day">Standard High-Protein — 7-Day Periodized</option>
+              <option value="standard_30day">Standard High-Protein — 30-Day</option>
+              <option value="paleo_30day">Paleo — 30-Day</option>
+            </select>
+            <span id="mealsPlanDesc" style="font-size:.65rem;color:var(--muted)"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Day tabs -->
+    <div id="mealsDayTabs" class="meals-day-tabs"></div>
+
+    <!-- Day summary bar -->
+    <div id="mealsDaySummary" class="meals-day-summary" style="display:none">
+      <div class="mds-item"><div class="mds-val" id="mds-cal" style="color:var(--orange)">—</div><div class="mds-label">kcal</div></div>
+      <div class="mds-item"><div class="mds-val" id="mds-carbs" style="color:var(--blue)">—</div><div class="mds-label">carbs</div></div>
+      <div class="mds-item"><div class="mds-val" id="mds-protein" style="color:var(--green)">—</div><div class="mds-label">protein</div></div>
+      <div class="mds-item"><div class="mds-val" id="mds-fat" style="color:var(--muted2)">—</div><div class="mds-label">fat</div></div>
+      <div class="mds-item" style="margin-left:auto"><div class="mds-val" id="mds-type" style="font-size:.75rem">—</div><div class="mds-label">day type</div></div>
+    </div>
+
+    <!-- Meal cards -->
+    <div id="mealCards" class="meal-grid"></div>
+
+  </div>
+</div><!-- /meals tab -->
+
 
 
 </div><!-- /dash-tab -->

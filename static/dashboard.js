@@ -155,11 +155,263 @@ async function refreshPelotonCache() {
 }
 
 
+
+// ── Meals Tab ─────────────────────────────────────────────────────────────────
+
+let _mealsDB       = null;
+let _mealsPlan     = 'standard_7day';
+let _mealsDay      = null;
+let _fuelDayType   = null;  // today's fuel day type from /api/fuel/plan
+
+const DAY_TYPE_COLOR_MEALS = {
+  rest: 'var(--red)', easy: 'var(--yellow)', moderate: 'var(--yellow)',
+  hard: 'var(--green)', long: 'var(--green)'
+};
+
+async function loadMeals() {
+  const content = document.getElementById('mealsContent');
+  const loading = document.getElementById('mealsLoading');
+  if (!content || !loading) return;
+  loading.style.display = 'flex';
+  content.style.display = 'none';
+
+  try {
+    // Load meals DB and today's fuel day type in parallel
+    const [mealsRes, fuelRes] = await Promise.all([
+      fetch('/api/meals'),
+      fetch('/api/fuel/plan'),
+    ]);
+    if (!mealsRes.ok) throw new Error('Meals data not found — make sure meals.json is in your Stride folder');
+    _mealsDB = await mealsRes.json();
+
+    // Get today's day type from fuel plan
+    if (fuelRes.ok) {
+      const fd = await fuelRes.json();
+      const today = fd.days && fd.days.find(d => d.is_today);
+      if (today) _fuelDayType = today.day_type;
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+    renderMealsPlan(_mealsPlan);
+  } catch(e) {
+    loading.style.display = 'none';
+    content.innerHTML = '<div style="padding:20px;color:var(--red);font-size:.75rem">' + e.message + '</div>';
+    content.style.display = 'block';
+  }
+}
+
+function onMealsPlanChange() {
+  _mealsPlan = document.getElementById('mealsPlanSelect').value;
+  _mealsDay  = null;
+  renderMealsPlan(_mealsPlan);
+}
+
+function renderMealsPlan(planKey) {
+  const plan = _mealsDB && _mealsDB.plans && _mealsDB.plans[planKey];
+  if (!plan) return;
+
+  // Update description
+  const descEl = document.getElementById('mealsPlanDesc');
+  if (descEl) descEl.textContent = plan.description || '';
+
+  // Build day tabs
+  const tabsEl = document.getElementById('mealsDayTabs');
+  if (!tabsEl) return;
+  tabsEl.innerHTML = '';
+
+  if (plan.type === 'periodized') {
+    // 7-day periodized — tabs are day types
+    const dayTypes = Object.keys(plan.days);
+    dayTypes.forEach(function(dt) {
+      const tab = document.createElement('div');
+      tab.className = 'meals-day-tab' + (dt === (_mealsDay || _fuelDayType || 'easy') ? ' active' : '');
+      const color = DAY_TYPE_COLOR_MEALS[dt] || 'var(--muted)';
+      tab.innerHTML = '<span class="dot" style="background:' + color + '"></span>' + plan.days[dt].label;
+      tab.onclick = function() {
+        document.querySelectorAll('.meals-day-tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        _mealsDay = dt;
+        renderMealDay(plan, dt);
+      };
+      tabsEl.appendChild(tab);
+    });
+    // Show today's day type by default
+    const defaultDay = _mealsDay || _fuelDayType || 'easy';
+    renderMealDay(plan, defaultDay);
+
+  } else if (plan.type === 'calendar') {
+    // 30-day — tabs are weeks, then days
+    const weeks = [...new Set(plan.days.map(function(d) { return d.week; }))].sort();
+    weeks.forEach(function(w) {
+      const tab = document.createElement('div');
+      tab.className = 'meals-day-tab' + (w === 1 ? ' active' : '');
+      tab.textContent = 'Week ' + w;
+      tab.onclick = function() {
+        document.querySelectorAll('.meals-day-tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        renderMealsWeek(plan, w);
+      };
+      tabsEl.appendChild(tab);
+    });
+    renderMealsWeek(plan, 1);
+
+  } else if (plan.type === 'library') {
+    // Paleo — tabs by meal type
+    const mealTypes = [...new Set(plan.meals.map(function(m) { return m.type; }))];
+    mealTypes.forEach(function(mt) {
+      const tab = document.createElement('div');
+      tab.className = 'meals-day-tab' + (mt === 'breakfast' ? ' active' : '');
+      tab.textContent = mt.charAt(0).toUpperCase() + mt.slice(1);
+      tab.onclick = function() {
+        document.querySelectorAll('.meals-day-tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        renderMealsLibrary(plan, mt);
+      };
+      tabsEl.appendChild(tab);
+    });
+    renderMealsLibrary(plan, 'breakfast');
+  }
+}
+
+function renderMealDay(plan, dayType) {
+  const day = plan.days[dayType];
+  if (!day) return;
+  showDaySummary(day.meals);
+  renderMealCards(day.meals);
+}
+
+function renderMealsWeek(plan, weekNum) {
+  const weekDays = plan.days.filter(function(d) { return d.week === weekNum; });
+  // Build inner day tabs
+  const tabsEl = document.getElementById('mealsDayTabs');
+  // Keep week tabs, add day sub-tabs below
+  // For simplicity, show first day's meals and let user pick day
+  const existing = Array.from(tabsEl.children);
+  // Remove any day sub-tabs
+  existing.forEach(function(t) {
+    if (t.dataset.dtype === 'day') t.remove();
+  });
+
+  // Show all meals for the week as a flat grid, grouped by day
+  const cards = document.getElementById('mealCards');
+  const summary = document.getElementById('mealsDaySummary');
+  if (summary) summary.style.display = 'none';
+  if (!cards) return;
+  cards.innerHTML = '';
+
+  weekDays.forEach(function(day) {
+    if (!day.meals || day.meals.length === 0) return;
+    // Day header
+    const header = document.createElement('div');
+    header.style.cssText = 'grid-column:1/-1;font-family:var(--sans);font-size:.85rem;font-weight:700;color:var(--orange);padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:2px';
+    header.textContent = day.day;
+    cards.appendChild(header);
+    day.meals.forEach(function(meal) {
+      cards.appendChild(buildMealCard(meal));
+    });
+  });
+}
+
+function renderMealsLibrary(plan, mealType) {
+  const meals = plan.meals.filter(function(m) { return m.type === mealType; });
+  showDaySummary(null);
+  renderMealCards(meals);
+}
+
+function showDaySummary(meals) {
+  const summary = document.getElementById('mealsDaySummary');
+  if (!summary) return;
+  if (!meals || meals.length === 0) { summary.style.display = 'none'; return; }
+
+  const totals = meals.reduce(function(acc, m) {
+    return {
+      cal:     acc.cal     + (m.cal     || 0),
+      protein: acc.protein + (m.protein || 0),
+      carbs:   acc.carbs   + (m.carbs   || 0),
+      fat:     acc.fat     + (m.fat     || 0),
+    };
+  }, {cal:0, protein:0, carbs:0, fat:0});
+
+  document.getElementById('mds-cal').textContent     = totals.cal;
+  document.getElementById('mds-carbs').textContent   = Math.round(totals.carbs) + 'g';
+  document.getElementById('mds-protein').textContent = Math.round(totals.protein) + 'g';
+  document.getElementById('mds-fat').textContent     = Math.round(totals.fat) + 'g';
+
+  const typeEl = document.getElementById('mds-type');
+  if (typeEl && _fuelDayType && _mealsPlan === 'standard_7day') {
+    typeEl.textContent = _fuelDayType.toUpperCase() + ' DAY';
+    typeEl.style.color = DAY_TYPE_COLOR_MEALS[_fuelDayType] || 'var(--muted)';
+  } else if (typeEl) {
+    typeEl.textContent = '';
+  }
+  summary.style.display = 'flex';
+}
+
+function renderMealCards(meals) {
+  const cards = document.getElementById('mealCards');
+  if (!cards) return;
+  cards.innerHTML = '';
+  meals.forEach(function(meal) {
+    cards.appendChild(buildMealCard(meal));
+  });
+}
+
+function buildMealCard(meal) {
+  const card = document.createElement('div');
+  card.className = 'meal-card-s';
+
+  const typeLabel = meal.type || 'Meal';
+  const macroHtml =
+    '<span style="color:var(--blue)">' + (meal.carbs || meal.c || 0) + 'g C</span> ' +
+    '<span style="color:var(--green)">' + (meal.protein || meal.p || 0) + 'g P</span> ' +
+    '<span style="color:var(--orange)">' + (meal.fat || meal.f || 0) + 'g F</span> ' +
+    '<span style="color:var(--muted2)">' + (meal.cal || 0) + ' cal</span>';
+
+  const desc = meal.desc || meal.description || '';
+  const tags = meal.tags || [];
+  const ingredients = meal.ingredients || [];
+  const steps = meal.steps || [];
+  const hasDetail = ingredients.length > 0 || steps.length > 0;
+
+  const tagsHtml = tags.map(function(t) {
+    return '<span class="meal-tag">' + t + '</span>';
+  }).join('');
+
+  card.innerHTML =
+    '<div class="meal-card-header">' +
+      '<span class="meal-card-label">' + typeLabel + '</span>' +
+      '<div class="meal-card-macros">' + macroHtml + '</div>' +
+    '</div>' +
+    '<div class="meal-card-body">' +
+      '<div class="meal-card-name">' + meal.name + '</div>' +
+      (desc ? '<div class="meal-card-desc">' + desc + '</div>' : '') +
+      (tagsHtml ? '<div class="meal-card-tags">' + tagsHtml + '</div>' : '') +
+      (hasDetail ? '<div class="meal-expand" id="expand-' + Math.random().toString(36).substr(2,6) + '" style="display:none">' +
+        (ingredients.length ? '<div class="meal-expand-title">Ingredients</div><ul>' + ingredients.map(function(i){ return '<li>' + i + '</li>'; }).join('') + '</ul>' : '') +
+        (steps.length ? '<div class="meal-expand-title" style="margin-top:8px">Steps</div><ol>' + steps.map(function(s){ return '<li>' + s + '</li>'; }).join('') + '</ol>' : '') +
+      '</div>' : '') +
+      (hasDetail ? '<div style="font-family:var(--mono);font-size:.58rem;color:var(--muted);margin-top:6px;cursor:pointer" onclick="toggleMealExpand(this)">▸ Show ingredients & steps</div>' : '') +
+    '</div>';
+
+  return card;
+}
+
+function toggleMealExpand(el) {
+  const body = el.parentElement;
+  const expand = body.querySelector('.meal-expand');
+  if (!expand) return;
+  const open = expand.style.display !== 'none';
+  expand.style.display = open ? 'none' : 'block';
+  el.textContent = open ? '▸ Show ingredients & steps' : '▾ Hide';
+}
+
+
 load();
 }
 
 // ── Tabs ────────────────────────────────────────────────────────────────────
-const tabNames={'overview':'Overview','performance':'Performance','info':'Guide','fuel':'Fuel','train':'Train'};
+const tabNames={'overview':'Overview','performance':'Performance','info':'Guide','fuel':'Fuel','train':'Train','meals':'Meals'};
 function switchTab(name){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
   document.querySelectorAll('.tab-page').forEach(p=>p.classList.toggle('active',p.id==='tab-'+name));
@@ -167,6 +419,7 @@ function switchTab(name){
   if(name==='performance' && !window._perfLoaded) loadPerformance();
   if(name==='fuel' && !window._fuelLoaded){ window._fuelLoaded=true; loadFuel(); }
   if(name==='train' && !window._trainLoaded){ window._trainLoaded=true; loadTrain(); }
+  if(name==='meals' && !window._mealsLoaded){ window._mealsLoaded=true; loadMeals(); }
 }
 
 // ── Drawer ──────────────────────────────────────────────────────────────────
@@ -997,6 +1250,258 @@ async function refreshPelotonCache() {
     status.textContent = 'Refresh failed: ' + e.message;
   }
   btn.disabled = false; btn.textContent = '↺ Refresh library';
+}
+
+
+
+// ── Meals Tab ─────────────────────────────────────────────────────────────────
+
+let _mealsDB       = null;
+let _mealsPlan     = 'standard_7day';
+let _mealsDay      = null;
+let _fuelDayType   = null;  // today's fuel day type from /api/fuel/plan
+
+const DAY_TYPE_COLOR_MEALS = {
+  rest: 'var(--red)', easy: 'var(--yellow)', moderate: 'var(--yellow)',
+  hard: 'var(--green)', long: 'var(--green)'
+};
+
+async function loadMeals() {
+  const content = document.getElementById('mealsContent');
+  const loading = document.getElementById('mealsLoading');
+  if (!content || !loading) return;
+  loading.style.display = 'flex';
+  content.style.display = 'none';
+
+  try {
+    // Load meals DB and today's fuel day type in parallel
+    const [mealsRes, fuelRes] = await Promise.all([
+      fetch('/api/meals'),
+      fetch('/api/fuel/plan'),
+    ]);
+    if (!mealsRes.ok) throw new Error('Meals data not found — make sure meals.json is in your Stride folder');
+    _mealsDB = await mealsRes.json();
+
+    // Get today's day type from fuel plan
+    if (fuelRes.ok) {
+      const fd = await fuelRes.json();
+      const today = fd.days && fd.days.find(d => d.is_today);
+      if (today) _fuelDayType = today.day_type;
+    }
+
+    loading.style.display = 'none';
+    content.style.display = 'block';
+    renderMealsPlan(_mealsPlan);
+  } catch(e) {
+    loading.style.display = 'none';
+    content.innerHTML = '<div style="padding:20px;color:var(--red);font-size:.75rem">' + e.message + '</div>';
+    content.style.display = 'block';
+  }
+}
+
+function onMealsPlanChange() {
+  _mealsPlan = document.getElementById('mealsPlanSelect').value;
+  _mealsDay  = null;
+  renderMealsPlan(_mealsPlan);
+}
+
+function renderMealsPlan(planKey) {
+  const plan = _mealsDB && _mealsDB.plans && _mealsDB.plans[planKey];
+  if (!plan) return;
+
+  // Update description
+  const descEl = document.getElementById('mealsPlanDesc');
+  if (descEl) descEl.textContent = plan.description || '';
+
+  // Build day tabs
+  const tabsEl = document.getElementById('mealsDayTabs');
+  if (!tabsEl) return;
+  tabsEl.innerHTML = '';
+
+  if (plan.type === 'periodized') {
+    // 7-day periodized — tabs are day types
+    const dayTypes = Object.keys(plan.days);
+    dayTypes.forEach(function(dt) {
+      const tab = document.createElement('div');
+      tab.className = 'meals-day-tab' + (dt === (_mealsDay || _fuelDayType || 'easy') ? ' active' : '');
+      const color = DAY_TYPE_COLOR_MEALS[dt] || 'var(--muted)';
+      tab.innerHTML = '<span class="dot" style="background:' + color + '"></span>' + plan.days[dt].label;
+      tab.onclick = function() {
+        document.querySelectorAll('.meals-day-tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        _mealsDay = dt;
+        renderMealDay(plan, dt);
+      };
+      tabsEl.appendChild(tab);
+    });
+    // Show today's day type by default
+    const defaultDay = _mealsDay || _fuelDayType || 'easy';
+    renderMealDay(plan, defaultDay);
+
+  } else if (plan.type === 'calendar') {
+    // 30-day — tabs are weeks, then days
+    const weeks = [...new Set(plan.days.map(function(d) { return d.week; }))].sort();
+    weeks.forEach(function(w) {
+      const tab = document.createElement('div');
+      tab.className = 'meals-day-tab' + (w === 1 ? ' active' : '');
+      tab.textContent = 'Week ' + w;
+      tab.onclick = function() {
+        document.querySelectorAll('.meals-day-tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        renderMealsWeek(plan, w);
+      };
+      tabsEl.appendChild(tab);
+    });
+    renderMealsWeek(plan, 1);
+
+  } else if (plan.type === 'library') {
+    // Paleo — tabs by meal type
+    const mealTypes = [...new Set(plan.meals.map(function(m) { return m.type; }))];
+    mealTypes.forEach(function(mt) {
+      const tab = document.createElement('div');
+      tab.className = 'meals-day-tab' + (mt === 'breakfast' ? ' active' : '');
+      tab.textContent = mt.charAt(0).toUpperCase() + mt.slice(1);
+      tab.onclick = function() {
+        document.querySelectorAll('.meals-day-tab').forEach(function(t) { t.classList.remove('active'); });
+        tab.classList.add('active');
+        renderMealsLibrary(plan, mt);
+      };
+      tabsEl.appendChild(tab);
+    });
+    renderMealsLibrary(plan, 'breakfast');
+  }
+}
+
+function renderMealDay(plan, dayType) {
+  const day = plan.days[dayType];
+  if (!day) return;
+  showDaySummary(day.meals);
+  renderMealCards(day.meals);
+}
+
+function renderMealsWeek(plan, weekNum) {
+  const weekDays = plan.days.filter(function(d) { return d.week === weekNum; });
+  // Build inner day tabs
+  const tabsEl = document.getElementById('mealsDayTabs');
+  // Keep week tabs, add day sub-tabs below
+  // For simplicity, show first day's meals and let user pick day
+  const existing = Array.from(tabsEl.children);
+  // Remove any day sub-tabs
+  existing.forEach(function(t) {
+    if (t.dataset.dtype === 'day') t.remove();
+  });
+
+  // Show all meals for the week as a flat grid, grouped by day
+  const cards = document.getElementById('mealCards');
+  const summary = document.getElementById('mealsDaySummary');
+  if (summary) summary.style.display = 'none';
+  if (!cards) return;
+  cards.innerHTML = '';
+
+  weekDays.forEach(function(day) {
+    if (!day.meals || day.meals.length === 0) return;
+    // Day header
+    const header = document.createElement('div');
+    header.style.cssText = 'grid-column:1/-1;font-family:var(--sans);font-size:.85rem;font-weight:700;color:var(--orange);padding:6px 0 4px;border-bottom:1px solid var(--border);margin-bottom:2px';
+    header.textContent = day.day;
+    cards.appendChild(header);
+    day.meals.forEach(function(meal) {
+      cards.appendChild(buildMealCard(meal));
+    });
+  });
+}
+
+function renderMealsLibrary(plan, mealType) {
+  const meals = plan.meals.filter(function(m) { return m.type === mealType; });
+  showDaySummary(null);
+  renderMealCards(meals);
+}
+
+function showDaySummary(meals) {
+  const summary = document.getElementById('mealsDaySummary');
+  if (!summary) return;
+  if (!meals || meals.length === 0) { summary.style.display = 'none'; return; }
+
+  const totals = meals.reduce(function(acc, m) {
+    return {
+      cal:     acc.cal     + (m.cal     || 0),
+      protein: acc.protein + (m.protein || 0),
+      carbs:   acc.carbs   + (m.carbs   || 0),
+      fat:     acc.fat     + (m.fat     || 0),
+    };
+  }, {cal:0, protein:0, carbs:0, fat:0});
+
+  document.getElementById('mds-cal').textContent     = totals.cal;
+  document.getElementById('mds-carbs').textContent   = Math.round(totals.carbs) + 'g';
+  document.getElementById('mds-protein').textContent = Math.round(totals.protein) + 'g';
+  document.getElementById('mds-fat').textContent     = Math.round(totals.fat) + 'g';
+
+  const typeEl = document.getElementById('mds-type');
+  if (typeEl && _fuelDayType && _mealsPlan === 'standard_7day') {
+    typeEl.textContent = _fuelDayType.toUpperCase() + ' DAY';
+    typeEl.style.color = DAY_TYPE_COLOR_MEALS[_fuelDayType] || 'var(--muted)';
+  } else if (typeEl) {
+    typeEl.textContent = '';
+  }
+  summary.style.display = 'flex';
+}
+
+function renderMealCards(meals) {
+  const cards = document.getElementById('mealCards');
+  if (!cards) return;
+  cards.innerHTML = '';
+  meals.forEach(function(meal) {
+    cards.appendChild(buildMealCard(meal));
+  });
+}
+
+function buildMealCard(meal) {
+  const card = document.createElement('div');
+  card.className = 'meal-card-s';
+
+  const typeLabel = meal.type || 'Meal';
+  const macroHtml =
+    '<span style="color:var(--blue)">' + (meal.carbs || meal.c || 0) + 'g C</span> ' +
+    '<span style="color:var(--green)">' + (meal.protein || meal.p || 0) + 'g P</span> ' +
+    '<span style="color:var(--orange)">' + (meal.fat || meal.f || 0) + 'g F</span> ' +
+    '<span style="color:var(--muted2)">' + (meal.cal || 0) + ' cal</span>';
+
+  const desc = meal.desc || meal.description || '';
+  const tags = meal.tags || [];
+  const ingredients = meal.ingredients || [];
+  const steps = meal.steps || [];
+  const hasDetail = ingredients.length > 0 || steps.length > 0;
+
+  const tagsHtml = tags.map(function(t) {
+    return '<span class="meal-tag">' + t + '</span>';
+  }).join('');
+
+  card.innerHTML =
+    '<div class="meal-card-header">' +
+      '<span class="meal-card-label">' + typeLabel + '</span>' +
+      '<div class="meal-card-macros">' + macroHtml + '</div>' +
+    '</div>' +
+    '<div class="meal-card-body">' +
+      '<div class="meal-card-name">' + meal.name + '</div>' +
+      (desc ? '<div class="meal-card-desc">' + desc + '</div>' : '') +
+      (tagsHtml ? '<div class="meal-card-tags">' + tagsHtml + '</div>' : '') +
+      (hasDetail ? '<div class="meal-expand" id="expand-' + Math.random().toString(36).substr(2,6) + '" style="display:none">' +
+        (ingredients.length ? '<div class="meal-expand-title">Ingredients</div><ul>' + ingredients.map(function(i){ return '<li>' + i + '</li>'; }).join('') + '</ul>' : '') +
+        (steps.length ? '<div class="meal-expand-title" style="margin-top:8px">Steps</div><ol>' + steps.map(function(s){ return '<li>' + s + '</li>'; }).join('') + '</ol>' : '') +
+      '</div>' : '') +
+      (hasDetail ? '<div style="font-family:var(--mono);font-size:.58rem;color:var(--muted);margin-top:6px;cursor:pointer" onclick="toggleMealExpand(this)">▸ Show ingredients & steps</div>' : '') +
+    '</div>';
+
+  return card;
+}
+
+function toggleMealExpand(el) {
+  const body = el.parentElement;
+  const expand = body.querySelector('.meal-expand');
+  if (!expand) return;
+  const open = expand.style.display !== 'none';
+  expand.style.display = open ? 'none' : 'block';
+  el.textContent = open ? '▸ Show ingredients & steps' : '▾ Hide';
 }
 
 
