@@ -1,0 +1,233 @@
+/* Stride Glass — bridge for the existing dashboard markup.
+   Loaded after the inline <style> in DASHBOARD_PAGE and after stride-glass.css.
+   Remaps the old variables to the new tokens and restyles existing components
+   without touching any element IDs that dashboard.js relies on. */
+
+/* ---------- Variable remap ---------- */
+:root {
+  --surface: var(--card);
+  --surface2: var(--inset);
+  --bg2: var(--inset);
+  --border: var(--hairline);
+  --border2: var(--hairline);
+  --orange: var(--accent);
+  --orange2: var(--accent);
+  --muted: var(--sub);
+  --muted2: var(--sub);
+  --mono: var(--font);
+  --sans: var(--font);
+  --radius: 24px;
+  --radius-sm: 12px;
+  --shadow-sm: var(--shadow);
+  --topbar-h: 64px;
+  /* Semantic colors, darkened for contrast on light surfaces */
+  --green: #248A3D; --blue: #0040DD; --purple: #8944AB; --red: #D70015; --yellow: #B25000;
+}
+:root[data-theme="dark"] { --green: #30D158; --blue: #0A84FF; --purple: #BF5AF2; --red: #FF453A; --yellow: #FFD60A; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --green: #30D158; --blue: #0A84FF; --purple: #BF5AF2; --red: #FF453A; --yellow: #FFD60A; }
+}
+
+/* ---------- Base ---------- */
+html { font-size: 14px; }
+@media (max-width: 768px) { html { font-size: 13.5px; } }
+body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+body::before { display: none; }
+
+/* Old chrome is kept in the DOM for dashboard.js, but hidden */
+.topbar, .tabs, .bottom-nav { display: none !important; }
+
+/* ---------- Pages ---------- */
+.tab-page { padding: 16px 16px calc(env(safe-area-inset-bottom, 0px) + 112px); }
+@media (min-width: 900px) {
+  .tab-page { max-width: 1440px; margin: 0 auto; padding: 28px 64px 48px; box-sizing: border-box; }
+}
+.tab-page.active { animation: none; }
+.row { gap: 20px; margin-bottom: 20px; }
+
+/* Numbers */
+.tval, .pr-val, .meta-val, .t-val, .fuel-macro-val, .mds-val, .summary-stat-val {
+  font-family: var(--font-num); font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Panels and tiles ---------- */
+.panel { border: 0; border-radius: 24px; background: var(--card); box-shadow: var(--shadow); }
+.panel:hover { transform: none; }
+.ph { background: transparent; border-bottom: 0; padding: 18px 20px 4px; }
+.pt { font: 600 1.1rem var(--font); letter-spacing: -0.01em; text-transform: none; color: var(--text); }
+.ptag { font-size: .82rem; color: var(--sub); }
+.pb { padding: 12px 20px 20px; }
+.tile { padding: 18px 20px; }
+.tlabel { font-size: .82rem; text-transform: none; letter-spacing: 0; color: var(--sub); margin-bottom: 6px; }
+.tsub { font-size: .8rem; color: var(--sub); }
+.row.c5 > .panel, .row.c4 > .panel { box-shadow: var(--shadow); }
+@media (max-width: 768px) {
+  .panel { border-radius: 22px; }
+  .row.c5, .row.c4 { gap: 10px; margin-right: -16px; padding-right: 16px; scrollbar-width: none; }
+  .row.c5::-webkit-scrollbar, .row.c4::-webkit-scrollbar { display: none; }
+  .row.c5 > .panel, .row.c4 > .panel { flex-basis: 40vw; }
+}
+
+/* ---------- Tables ---------- */
+.dt th { background: transparent; text-transform: none; letter-spacing: 0; font-size: .8rem; color: var(--sub); border-bottom: 1px solid var(--hairline); }
+.dt td { border-bottom: 1px solid var(--hairline); }
+.dt tr:nth-child(even) td { background: transparent; }
+.dt tr.clickable:hover td { background: var(--inset); color: var(--text); }
+.tn { font-family: var(--font-num); }
+.bk { border-radius: 999px; padding: 2px 8px; }
+
+/* ---------- PRs, heatmap, insights ---------- */
+.pr-item { border-right-color: var(--hairline); }
+.pr-item:hover { background: var(--inset); transform: none; }
+.pr-type, .hm-month-labels { text-transform: none; letter-spacing: 0; font-size: .78rem; color: var(--sub); }
+.hm-0 { background: var(--inset); }
+.hm-cell { border-radius: 3px; }
+.insights-box strong { color: var(--accent); }
+.insight-btn {
+  background: var(--inset); border: 0; border-radius: 999px; color: var(--text);
+  font: 600 .85rem var(--font); min-height: 36px; padding: 0 16px;
+}
+.insight-btn:hover { color: var(--accent); }
+.status-badge { border-radius: 999px; }
+
+/* ---------- Drawer: solid content, glass header ---------- */
+.drawer {
+  background: var(--card); border-left: 0; border-radius: 28px 0 0 28px; box-shadow: none;
+}
+.drawer.open { box-shadow: -20px 0 60px rgba(0, 0, 0, .18); }
+.drawer-topbar {
+  height: 60px; border-bottom: 1px solid var(--hairline);
+  background: rgb(var(--glass-rgb) / calc(0.97 - var(--glass) * 0.5));
+  -webkit-backdrop-filter: blur(calc(var(--glass) * 28px)) saturate(calc(100% + var(--glass) * 80%));
+          backdrop-filter: blur(calc(var(--glass) * 28px)) saturate(calc(100% + var(--glass) * 80%));
+}
+.drawer-title { font: 700 1.1rem var(--font); letter-spacing: -0.01em; }
+.drawer-close {
+  border: 1px solid var(--hairline); border-radius: 999px; color: var(--text);
+  font: 600 .85rem var(--font); min-height: 36px; padding: 0 14px;
+}
+.drawer-close:hover { color: var(--accent); border-color: var(--accent); }
+.drawer-body { padding: 16px 20px; }
+#runMap { border-radius: 18px; }
+.leaflet-container { background: var(--inset); }
+@media (max-width: 768px) { .drawer { border-radius: 0; } }
+
+.meta-cell, .t-cell, .sc-panel, .splits-panel, .fuel-macro-cell, .fuel-timing-cell, .info-formula,
+.meal-expand, .summary-stat {
+  background: var(--inset); border: 0; border-radius: 16px;
+}
+.meta-label, .t-label, .sc-title, .fuel-macro-label, .info-card-sub, .fuel-cell-dow, .fuel-cell-type,
+.train-day-dow, .train-run-badge, .train-pelo-label, .train-core-label, .meal-card-label, .meal-expand-title,
+.mds-label, .summary-stat-label, .fuel-timing-label, .meals-day-tab {
+  text-transform: none; letter-spacing: 0;
+}
+.meta-label, .t-label, .sc-title, .fuel-macro-label, .mds-label, .summary-stat-label { font-size: .78rem; color: var(--sub); }
+.strava-link { border-radius: 12px; font-family: var(--font); } /* keeps Strava brand orange */
+
+/* ---------- Guide ---------- */
+.info-card { background: var(--card); border: 0; border-radius: 24px; box-shadow: var(--shadow); padding: 20px; }
+.info-card-title { font: 700 1rem var(--font); color: var(--text); }
+.info-card p { font-size: .88rem; line-height: 1.7; }
+.info-section-head { font: 700 1.25rem var(--font); letter-spacing: -0.01em; border-bottom-color: var(--hairline); }
+.info-tag { border-radius: 999px; }
+
+/* ---------- Fuel ---------- */
+.fuel-strip { gap: 8px; }
+.fuel-cell { background: var(--inset); border: 1px solid transparent; border-radius: 16px; padding: 10px 8px; }
+.fuel-cell:hover { background: var(--inset); border-color: var(--hairline); }
+.fuel-cell-active { border-color: var(--accent) !important; background: var(--accent-lens) !important; }
+.fuel-cell-today { border-color: var(--hairline); }
+.fuel-detail-header { border-bottom-color: var(--hairline); }
+.fuel-macro-row { gap: 10px; }
+
+/* ---------- Train ---------- */
+.train-week { gap: 10px; }
+.train-day { background: var(--card); border: 1px solid transparent; border-radius: 20px; box-shadow: var(--shadow); }
+.train-day.today { border-color: var(--accent); }
+.train-day-header { background: transparent; border-bottom: 1px solid var(--hairline); padding: 10px 12px 8px; }
+.train-day-body { padding: 10px 12px 12px; }
+.train-run-badge, .train-pelo-link { border-radius: 999px; }
+.train-core-addon { border-radius: 12px; border: 0; }
+.train-pelo-divider { border-top-style: solid; border-top-color: var(--hairline); }
+.train-cache-bar { background: var(--card); border: 0; border-radius: 18px; box-shadow: var(--shadow); padding: 10px 16px; }
+
+/* ---------- Meals ---------- */
+.meals-select {
+  background: var(--card); border: 1px solid var(--hairline); border-radius: 12px;
+  font: 500 .85rem var(--font); min-height: 36px; padding: 0 10px;
+}
+.meals-select:focus { border-color: var(--accent); }
+.meals-day-tabs { gap: 6px; }
+.meals-day-tab {
+  border: 0; border-radius: 999px; background: var(--inset); color: var(--sub);
+  font: 600 .8rem var(--font); min-height: 36px; padding: 0 14px;
+}
+.meals-day-tab.active { background: var(--accent); color: var(--on-accent); }
+.meal-grid { gap: 16px; }
+.meal-card-s { background: var(--card); border: 1px solid transparent; border-radius: 22px; box-shadow: var(--shadow); }
+.meal-card-s.expanded { border-color: var(--accent); }
+.meal-card-header { background: transparent; border-bottom: 1px solid var(--hairline); padding: 12px 16px; }
+.meal-card-body { padding: 14px 16px; }
+.meal-card-name { font: 700 1.05rem var(--font); }
+.meal-tag { border-radius: 999px; }
+.meals-day-summary { background: var(--card); border: 0; border-radius: 20px; box-shadow: var(--shadow); padding: 14px 18px; gap: 18px; }
+
+/* ---------- Analytics ---------- */
+.analytics-grid, .summary-grid { gap: 16px; }
+.zone-bar-full, .shoe-progress { background: var(--inset); border-radius: 999px; }
+.zone-bar-fill, .shoe-progress-fill { border-radius: 999px; }
+.shoe-card, .race-phase { background: var(--inset); border: 1px solid transparent; border-radius: 16px; }
+.shoe-card.warning { border-color: var(--yellow); }
+.shoe-card.replace { border-color: var(--red); }
+.race-phase.current { border-color: var(--accent); }
+.race-phase-name { font: 700 .95rem var(--font); }
+
+/* Inputs styled inline by the old markup */
+.tab-page input[type="text"], .tab-page input[type="number"], .tab-page input[type="date"], .tab-page select {
+  border-radius: 10px !important; min-height: 34px; font-family: var(--font) !important;
+  background: var(--card) !important; border-color: var(--hairline) !important;
+}
+
+/* ---------- Loading ---------- */
+.spin { border-color: var(--hairline); border-top-color: var(--accent); }
+.lmsg { font-size: .85rem; color: var(--sub); }
+
+/* ---------- Version panel (opened from Settings) ---------- */
+#versionPanel { top: 72px !important; border: 0 !important; border-radius: 20px !important; box-shadow: var(--nav-shadow) !important; }
+
+/* ---------- Shell additions ---------- */
+.sg-subnav { display: flex; justify-content: center; padding: 12px 16px 0; }
+.sg-subnav[hidden] { display: none; }
+@media (min-width: 900px) { .sg-subnav { padding-top: 20px; } }
+.sg-today { margin-bottom: 20px; }
+.sg-today__macros { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 900px) { .sg-today__macros { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.sg-today__macros .sg-value { font-family: var(--font-num); font-weight: 600; }
+.sg-sheet__actions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+.sg-sheet__actions .sg-btn { width: 100%; }
+
+/* One accent: old per-tile colors go neutral; orange tiles already follow the day accent */
+.tval.bl, .tval.gr, .tval.pu { color: var(--text); }
+
+/* ---------- iOS 27 pass: inline-style overrides ---------- */
+/* Old square corners in inline styles -> iOS radii */
+[style*="border-radius:2px"], [style*="border-radius:3px"], [style*="border-radius:4px"] { border-radius: 12px !important; }
+/* iOS never goes below ~11px */
+[style*="font-size:.5"], [style*="font-size:.6"] { font-size: 11px !important; }
+[style*="font-size:.7"] { font-size: 13px !important; }
+/* Buttons: capsule, filled-tint */
+.insight-btn, .meals-select {
+  border: 0 !important; border-radius: 999px !important; min-height: 40px; padding: 0 16px !important;
+  background: var(--inset) !important; color: var(--accent) !important;
+  font: 600 15px var(--font) !important; letter-spacing: 0 !important; text-transform: none !important;
+}
+.train-day { border-width: 2px; }
+.train-day-dow { font-size: 12px; }
+.train-day-header { border-bottom: 0; }
+.train-pelo-link { background: var(--accent-tint); color: var(--accent); border: 0; font-weight: 600; }
+/* Sentence-case, not mono/uppercase micro-labels */
+.train-run-badge, .train-pelo-label, .train-core-label, .meal-card-label, .meal-expand-title { text-transform: none !important; letter-spacing: 0 !important; font-size: 12px !important; }
+
+/* iOS scrollers: no visible bars */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { display: none; }

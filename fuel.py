@@ -459,3 +459,255 @@ if __name__ == "__main__":
     for atype, miles, hr, secs, label in test_activities:
         result = classify_activity(atype, miles, hr, secs)
         print(f"  {label:<42} -> {result}")
+
+
+# ── Post-run recovery nutrition ───────────────────────────────────────────────
+
+def calories_burned(
+    weight_lbs: float,
+    distance_miles: float,
+    moving_time_sec: int,
+    avg_hr: float = None,
+    activity_type: str = "Run",
+) -> int:
+    """
+    Estimate calories burned using HR-based Keytel formula when HR is available,
+    falling back to MET-based estimate for runs and activity-based for strength.
+
+    Keytel formula (male):
+      kcal/min = (-55.0969 + 0.6309*HR + 0.1988*kg + 0.2017*age) / 4.184
+    """
+    kg  = weight_lbs * 0.453592
+    age = 32  # default — could be made configurable
+
+    if avg_hr and avg_hr > 60:
+        kcal_per_min = (-55.0969 + 0.6309 * avg_hr + 0.1988 * kg + 0.2017 * age) / 4.184
+        total = max(0, kcal_per_min * (moving_time_sec / 60))
+        return round(total)
+
+    # MET fallback
+    if activity_type in ("Run", "VirtualRun", "TrailRun"):
+        # ~0.75 kcal per kg per km
+        km = distance_miles * 1.60934
+        return round(0.75 * kg * km)
+    elif activity_type in STRENGTH_TYPES:
+        # ~5 METs for moderate lifting
+        return round(5 * kg * (moving_time_sec / 3600))
+    else:
+        return round(4 * kg * (moving_time_sec / 3600))
+
+
+def glycogen_depletion_pct(
+    distance_miles: float,
+    moving_time_sec: int,
+    avg_hr: float = None,
+    activity_type: str = "Run",
+) -> int:
+    """
+    Estimate % glycogen depletion (0-100).
+    100% = fully depleted (marathon-level effort).
+    Based on duration, intensity, and activity type.
+    """
+    if activity_type not in ("Run", "VirtualRun", "TrailRun", "Ride", "VirtualRide"):
+        # Strength/HIIT — moderate glycogen use
+        dur_min = moving_time_sec / 60
+        return min(100, int(dur_min * 0.8))
+
+    duration_min = moving_time_sec / 60
+
+    # Intensity multiplier from HR
+    if avg_hr:
+        hr_pct = avg_hr / EST_MAX_HR
+        if hr_pct < 0.65:   intensity = 0.6
+        elif hr_pct < 0.75: intensity = 0.8
+        elif hr_pct < 0.85: intensity = 1.0
+        else:               intensity = 1.2
+    else:
+        # Estimate from pace (distance/time)
+        pace_min_per_mile = duration_min / max(distance_miles, 0.1)
+        if pace_min_per_mile > 11:   intensity = 0.6
+        elif pace_min_per_mile > 9:  intensity = 0.8
+        elif pace_min_per_mile > 7:  intensity = 1.0
+        else:                        intensity = 1.2
+
+    # Base depletion: ~1.5% per minute at moderate intensity
+    base_pct = duration_min * 1.5 * intensity
+
+    # Long run bonus — hits glycogen harder
+    if distance_miles >= 13:
+        base_pct *= 1.3
+    elif distance_miles >= 10:
+        base_pct *= 1.15
+
+    return min(100, round(base_pct))
+
+
+def post_run_nutrition(
+    weight_lbs: float,
+    distance_miles: float,
+    moving_time_sec: int,
+    elapsed_since_finish_min: float,
+    avg_hr: float = None,
+    activity_type: str = "Run",
+) -> dict:
+    """
+    Calculate personalized post-run nutrition targets based on actual run data.
+
+    Returns:
+        {
+            urgency:         "critical" | "open" | "closing" | "closed",
+            urgency_label:   str,
+            urgency_color:   str,
+            elapsed_min:     int,
+            window_closes_in: int,  # minutes until window closes
+            cal_burned:      int,
+            glycogen_pct:    int,
+            targets: {
+                calories, protein_g, carbs_g, fat_g
+            },
+            notes:           [str],  # personalized coaching notes
+        }
+    """
+    cal_burned   = calories_burned(weight_lbs, distance_miles, moving_time_sec, avg_hr, activity_type)
+    glycogen_pct = glycogen_depletion_pct(distance_miles, moving_time_sec, avg_hr, activity_type)
+    day_type     = classify_activity(activity_type, distance_miles, avg_hr, moving_time_sec)
+    elapsed      = round(elapsed_since_finish_min)
+
+    # ── Urgency window ────────────────────────────────────────────────────────
+    if elapsed <= 30:
+        urgency       = "critical"
+        urgency_label = "Act now"
+        urgency_color = "#f87171"   # red
+        window_closes_in = 30 - elapsed
+    elif elapsed <= 90:
+        urgency       = "open"
+        urgency_label = "Window open"
+        urgency_color = "#f5a623"   # orange
+        window_closes_in = 90 - elapsed
+    elif elapsed <= 120:
+        urgency       = "closing"
+        urgency_label = "Closing soon"
+        urgency_color = "#fbbf24"   # yellow
+        window_closes_in = 120 - elapsed
+    else:
+        urgency       = "closed"
+        urgency_label = "Window closed"
+        urgency_color = "#4b5168"   # muted
+        window_closes_in = 0
+
+    # ── Recovery targets ──────────────────────────────────────────────────────
+    # Scale protein to run stress
+    if day_type == "long":
+        protein_g = 55
+        carbs_g   = min(120, round(glycogen_pct * 1.1))
+        fat_g     = 10
+    elif day_type == "hard":
+        protein_g = 52
+        carbs_g   = min(100, round(glycogen_pct * 0.95))
+        fat_g     = 8
+    elif day_type == "moderate":
+        protein_g = 48
+        carbs_g   = min(80, round(glycogen_pct * 0.85))
+        fat_g     = 8
+    else:  # easy / rest / strength
+        protein_g = 40
+        carbs_g   = min(50, round(glycogen_pct * 0.7))
+        fat_g     = 6
+
+    # Adjust down if window is closing (less acute need)
+    if urgency == "closing":
+        protein_g = round(protein_g * 0.85)
+        carbs_g   = round(carbs_g * 0.85)
+
+    recovery_cal = (protein_g * 4) + (carbs_g * 4) + (fat_g * 9)
+
+    # ── Personalized notes ────────────────────────────────────────────────────
+    notes = []
+
+    if urgency == "critical":
+        notes.append(f"You have {window_closes_in} min left in the critical window — prioritize a shake or chocolate milk right now.")
+    elif urgency == "open":
+        notes.append(f"Recovery window is open for another {window_closes_in} min. Real food is fine.")
+    elif urgency == "closing":
+        notes.append(f"Window closing in {window_closes_in} min. Eat something even if you're not hungry.")
+    elif urgency == "closed":
+        notes.append("The acute window has passed. Focus on your next full meal and hitting daily protein targets.")
+
+    if day_type == "long":
+        notes.append(f"Long run depleted ~{glycogen_pct}% of glycogen. Prioritize carbs and sodium — add electrolytes to your drink.")
+    elif glycogen_pct > 60:
+        notes.append(f"High glycogen depletion ({glycogen_pct}%) — carbs are more important than usual right now.")
+
+    if avg_hr and avg_hr / EST_MAX_HR > 0.85:
+        notes.append("High-intensity effort — your muscle breakdown is elevated. Don't skip the protein window.")
+
+    if cal_burned > 800:
+        notes.append(f"You burned ~{cal_burned} cal. Your recovery meal won't fully replace that — the rest comes from daily intake.")
+
+    is_long_run = day_type == "long" or distance_miles >= 10
+    is_strength = activity_type in STRENGTH_TYPES
+
+    return {
+        "urgency":           urgency,
+        "urgency_label":     urgency_label,
+        "urgency_color":     urgency_color,
+        "elapsed_min":       elapsed,
+        "window_closes_in":  window_closes_in,
+        "cal_burned":        cal_burned,
+        "glycogen_pct":      glycogen_pct,
+        "day_type":          day_type,
+        "is_long_run":       is_long_run,
+        "is_strength":       is_strength,
+        "targets": {
+            "calories":  recovery_cal,
+            "protein_g": protein_g,
+            "carbs_g":   carbs_g,
+            "fat_g":     fat_g,
+        },
+        "notes": notes,
+    }
+
+
+def score_recovery_meal(meal: dict, targets: dict, urgency: str, is_long_run: bool = False, is_strength: bool = False) -> float:
+    """
+    Score a recovery meal against calculated targets.
+    Returns 0.0-1.0 (higher = better match).
+
+    Scoring weights:
+    - Protein proximity: 35%
+    - Carb proximity: 30%
+    - Urgency match: 20%
+    - Special flags (long run, strength): 10%
+    - Prep time penalty for critical window: 5%
+    """
+    score = 0.0
+
+    # Protein match (35%) — within 20g = full score
+    p_diff = abs(meal["protein"] - targets["protein_g"])
+    p_score = max(0, 1 - p_diff / 30)
+    score += p_score * 0.35
+
+    # Carb match (30%) — within 25g = full score
+    c_diff = abs(meal["carbs"] - targets["carbs_g"])
+    c_score = max(0, 1 - c_diff / 40)
+    score += c_score * 0.30
+
+    # Urgency match (20%)
+    if urgency in meal.get("urgency", []):
+        score += 0.20
+    elif urgency == "critical" and "open" in meal.get("urgency", []):
+        score += 0.10  # partial credit
+
+    # Special flags (10%)
+    if is_long_run and meal.get("long_run"):
+        score += 0.10
+    elif is_strength and meal.get("strength"):
+        score += 0.10
+    elif not is_long_run and not is_strength and meal.get("easy_run"):
+        score += 0.05
+
+    # Prep time bonus for critical window (5%)
+    if urgency == "critical" and meal.get("prep") == "instant":
+        score += 0.05
+
+    return round(score, 3)

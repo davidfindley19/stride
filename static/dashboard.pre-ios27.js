@@ -1,37 +1,17 @@
-// ── iOS 27 palette (theme-aware; charts read this at draw time) ─────────────
-const _dark=()=>{const t=document.documentElement.getAttribute('data-theme');return t?t==='dark':matchMedia('(prefers-color-scheme: dark)').matches};
-const P={
-  get grid(){return _dark()?'rgba(84,84,88,.45)':'rgba(60,60,67,.12)'},
-  get tick(){return _dark()?'#98989F':'#6C6C70'},
-  get tipBg(){return _dark()?'#2C2C2E':'#FFFFFF'},
-  get tipBorder(){return _dark()?'rgba(84,84,88,.6)':'rgba(60,60,67,.18)'},
-  get tipTitle(){return _dark()?'#98989F':'#6C6C70'},
-  get tipBody(){return _dark()?'#FFFFFF':'#000000'},
-  get track(){return _dark()?'#3A3A3C':'#E5E5EA'},
-  get blue(){return _dark()?'#0A84FF':'#007AFF'},
-  get green(){return _dark()?'#30D158':'#34C759'},
-  get orange(){return _dark()?'#FF9F0A':'#FF9500'},
-  get yellow(){return _dark()?'#FFD60A':'#FFCC00'},
-  get red(){return _dark()?'#FF453A':'#FF3B30'},
-  get purple(){return _dark()?'#BF5AF2':'#AF52DE'}
-};
-const _FONT="-apple-system,'SF Pro Text','Helvetica Neue',sans-serif";
 
 // ── Chart defaults ──────────────────────────────────────────────────────────
 const CD={
   responsive:true,maintainAspectRatio:false,
-  plugins:{legend:{display:false},tooltip:{backgroundColor:P.tipBg,borderColor:P.tipBorder,borderWidth:1,titleColor:P.tipTitle,bodyColor:P.tipBody,padding:8}},
+  plugins:{legend:{display:false},tooltip:{backgroundColor:'#1e2028',borderColor:'#2e3140',borderWidth:1,titleColor:'#8b90a0',bodyColor:'#d4d8e2',padding:8}},
   scales:{
-    x:{grid:{color:P.grid},ticks:{color:P.tick,font:{family:_FONT,size:10},maxRotation:0}},
-    y:{grid:{color:P.grid},ticks:{color:P.tick,font:{family:_FONT,size:10}},beginAtZero:true}
+    x:{grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{family:"'JetBrains Mono',monospace",size:10},maxRotation:0}},
+    y:{grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{family:"'JetBrains Mono',monospace",size:10}},beginAtZero:true}
   }
 };
 function deep(a,b){const o={...a};for(const k in b){if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k]))o[k]=deep(a[k]||{},b[k]);else o[k]=b[k];}return o;}
 function mk(id,type,labels,datasets,ov={}){
   const el=document.getElementById(id);if(!el)return null;
   if(el._chart)el._chart.destroy();
-  // Reversed y (pace) would fill the whole plot from the top; draw the line only.
-  if(ov.scales&&ov.scales.y&&ov.scales.y.reverse)datasets.forEach(d=>{d.fill=false;});
   const c=new Chart(el,{type,data:{labels,datasets},options:deep(CD,ov)});
   el._chart=c;return c;
 }
@@ -111,7 +91,7 @@ window.addEventListener('popstate', e=>{
 function renderDrawer(data){
   const s=data.summary,st=data.streams,tr=s.training;
   document.getElementById('drawerTitle').textContent=s.name;
-  const zColors=[P.blue,P.green,P.yellow,P.orange,P.red];
+  const zColors=['#5794f2','#73bf69','#fade2a','#f5a623','#f2495c'];
   let iLabel='—',iClass='or';
   if(tr.intensity_pct){const p=tr.intensity_pct;if(p<60){iLabel='Easy';iClass='gr';}else if(p<70){iLabel='Aerobic';iClass='bl';}else if(p<80){iLabel='Tempo';iClass='or';}else if(p<90){iLabel='Threshold';iClass='or';}else{iLabel='Max';iClass='rd';}}
   const hasPace=st.pace&&st.pace.length>0,hasHR=st.hr&&st.hr.length>0,hasElev=st.elevation&&st.elevation.length>0,hasMap=st.latlng&&st.latlng.length>1,hasSplits=s.splits&&s.splits.length>0;
@@ -134,7 +114,7 @@ function renderDrawer(data){
       <div class="t-cell"><div class="t-label">Training Load</div><div class="t-val">${tr.training_load||'—'}</div><div class="t-sub">TRIMP score</div></div>
       <div class="t-cell"><div class="t-label">Suffer Score</div><div class="t-val">${tr.suffer_score||'—'}</div><div class="t-sub">Strava relative effort</div></div>
       <div class="t-cell"><div class="t-label">Intensity</div><div class="t-val ${iClass}">${tr.intensity_pct?tr.intensity_pct+'%':'—'}</div><div class="t-sub">${iLabel}</div>
-        <div class="zone-bar">${zColors.map((c,i)=>`<div class="zs" style="flex:1;background:${i<(tr.intensity_pct?Math.ceil(tr.intensity_pct/20):0)?c:P.track}"></div>`).join('')}</div></div>
+        <div class="zone-bar">${zColors.map((c,i)=>`<div class="zs" style="flex:1;background:${i<(tr.intensity_pct?Math.ceil(tr.intensity_pct/20):0)?c:'#2a2d36'}"></div>`).join('')}</div></div>
     </div>
     ${hasPace||hasHR||hasElev?`
     <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">Data Over Distance</div>
@@ -152,10 +132,10 @@ function renderDrawer(data){
     if(hasMap){
       drawerMap=L.map('runMap',{zoomControl:true,attributionControl:false});
       L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(drawerMap);
-      const line=L.polyline(st.latlng,{color:P.orange,weight:3,opacity:.9}).addTo(drawerMap);
+      const line=L.polyline(st.latlng,{color:'#f5a623',weight:3,opacity:.9}).addTo(drawerMap);
       if(st.latlng.length>0){
-        const si=L.divIcon({className:'',html:'<div style="width:10px;height:10px;border-radius:50%;background:var(--green);border:2px solid #fff"></div>'});
-        const ei=L.divIcon({className:'',html:'<div style="width:10px;height:10px;border-radius:50%;background:var(--red);border:2px solid #fff"></div>'});
+        const si=L.divIcon({className:'',html:'<div style="width:10px;height:10px;border-radius:50%;background:#73bf69;border:2px solid #fff"></div>'});
+        const ei=L.divIcon({className:'',html:'<div style="width:10px;height:10px;border-radius:50%;background:#f2495c;border:2px solid #fff"></div>'});
         L.marker(st.latlng[0],{icon:si}).addTo(drawerMap);
         L.marker(st.latlng[st.latlng.length-1],{icon:ei}).addTo(drawerMap);
       }
@@ -164,10 +144,10 @@ function renderDrawer(data){
       document.getElementById('runMap').innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--muted);font-size:.75rem">No GPS data available</div>';
     }
     const dLabels=st.distance.map(d=>d.toFixed(1));
-    const so=deep({scales:{x:{ticks:{callback:(_,i)=>i%Math.ceil(dLabels.length/6)===0?dLabels[i]+'mi':'',font:{size:9}},grid:{color:P.grid}},y:{grid:{color:P.grid},ticks:{font:{size:9}}}}},{});
-    if(hasPace&&document.getElementById('dPaceChart')){const c=mk('dPaceChart','line',dLabels,[{data:st.pace,borderColor:P.orange,backgroundColor:'rgba(255,149,0,.08)',borderWidth:1.5,fill:true,tension:0.3,pointRadius:0,spanGaps:true}],deep(so,{scales:{y:{reverse:true,ticks:{callback:v=>v?pFmt(v):''}}}},{plugins:{tooltip:{callbacks:{label:ctx=>ctx.parsed.y?` ${pFmt(ctx.parsed.y)}/mi`:''}}}}));if(c)drawerCharts.push(c);}
-    if(hasHR&&document.getElementById('dHRChart')){const c=mk('dHRChart','line',dLabels,[{data:st.hr,borderColor:P.red,backgroundColor:'rgba(255,59,48,.08)',borderWidth:1.5,fill:true,tension:0.3,pointRadius:0,spanGaps:true}],so);if(c)drawerCharts.push(c);}
-    if(hasElev&&document.getElementById('dElevChart')){const c=mk('dElevChart','line',dLabels,[{data:st.elevation,borderColor:P.green,backgroundColor:'rgba(52,199,89,.12)',borderWidth:1.5,fill:true,tension:0.3,pointRadius:0,spanGaps:true}],so);if(c)drawerCharts.push(c);}
+    const so=deep({scales:{x:{ticks:{callback:(_,i)=>i%Math.ceil(dLabels.length/6)===0?dLabels[i]+'mi':'',font:{size:9}},grid:{color:'#1a1c22'}},y:{grid:{color:'#1a1c22'},ticks:{font:{size:9}}}}},{});
+    if(hasPace&&document.getElementById('dPaceChart')){const c=mk('dPaceChart','line',dLabels,[{data:st.pace,borderColor:'#f5a623',backgroundColor:'rgba(245,166,35,.08)',borderWidth:1.5,fill:true,tension:0.3,pointRadius:0,spanGaps:true}],deep(so,{scales:{y:{reverse:true,ticks:{callback:v=>v?pFmt(v):''}}}},{plugins:{tooltip:{callbacks:{label:ctx=>ctx.parsed.y?` ${pFmt(ctx.parsed.y)}/mi`:''}}}}));if(c)drawerCharts.push(c);}
+    if(hasHR&&document.getElementById('dHRChart')){const c=mk('dHRChart','line',dLabels,[{data:st.hr,borderColor:'#f2495c',backgroundColor:'rgba(242,73,92,.08)',borderWidth:1.5,fill:true,tension:0.3,pointRadius:0,spanGaps:true}],so);if(c)drawerCharts.push(c);}
+    if(hasElev&&document.getElementById('dElevChart')){const c=mk('dElevChart','line',dLabels,[{data:st.elevation,borderColor:'#73bf69',backgroundColor:'rgba(115,191,105,.12)',borderWidth:1.5,fill:true,tension:0.3,pointRadius:0,spanGaps:true}],so);if(c)drawerCharts.push(c);}
   });
 }
 
@@ -202,7 +182,7 @@ function renderOverviewCharts(){
   if(!d) return;
   const wkLabels=d.weekly_spark.labels.map(l=>{const dt=new Date(l+'T00:00');return dt.toLocaleDateString('en-US',{month:'short',day:'numeric'});});
   const wkChart=mk('wkChart','bar',wkLabels,
-    [{data:d.weekly_spark.miles,backgroundColor:'rgba(0,122,255,0.65)',hoverBackgroundColor:'rgba(0,122,255,1)',borderRadius:6,borderSkipped:false}]);
+    [{data:d.weekly_spark.miles,backgroundColor:'rgba(87,148,242,0.65)',hoverBackgroundColor:'rgba(87,148,242,1)',borderRadius:2,borderSkipped:false}]);
   if(wkChart){
     document.getElementById('wkChart').addEventListener('click',e=>{
       const pts=wkChart.getElementsAtEventForMode(e,'nearest',{intersect:true},false);
@@ -217,15 +197,15 @@ function renderOverviewCharts(){
     });
   }
   mk('moChart','bar',d.monthly_chart.labels,
-    [{data:d.monthly_chart.miles,backgroundColor:'rgba(52,199,89,0.65)',borderRadius:6,borderSkipped:false}]);
+    [{data:d.monthly_chart.miles,backgroundColor:'rgba(115,191,105,0.65)',borderRadius:2,borderSkipped:false}]);
 
   const paceChart=mk('paceChart','line',d.pace_trend.labels,[{
-    data:d.pace_trend.pace_sec,borderColor:P.orange,backgroundColor:'rgba(255,149,0,0.07)',
-    borderWidth:1.5,fill:true,tension:0.35,pointRadius:4,pointBackgroundColor:P.orange,pointHoverRadius:7
-  }],{scales:{y:{reverse:true,grid:{color:P.grid},ticks:{color:P.tick,font:{size:10},callback:v=>{const m=Math.floor(v/60);return `${m}:${String(v%60).padStart(2,'0')}`;}}},x:{grid:{color:P.grid},ticks:{color:P.tick,font:{size:10}}}},plugins:{tooltip:{callbacks:{label:ctx=>{const s=ctx.parsed.y;return ` ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')} /mi`;}}}}});
+    data:d.pace_trend.pace_sec,borderColor:'#f5a623',backgroundColor:'rgba(245,166,35,0.07)',
+    borderWidth:1.5,fill:true,tension:0.35,pointRadius:4,pointBackgroundColor:'#f5a623',pointHoverRadius:7
+  }],{scales:{y:{reverse:true,grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{size:10},callback:v=>{const m=Math.floor(v/60);return `${m}:${String(v%60).padStart(2,'0')}`;}}},x:{grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{size:10}}}},plugins:{tooltip:{callbacks:{label:ctx=>{const s=ctx.parsed.y;return ` ${Math.floor(s/60)}:${String(s%60).padStart(2,'0')} /mi`;}}}}});
   if(paceChart){document.getElementById('paceChart').addEventListener('click',e=>{const pts=paceChart.getElementsAtEventForMode(e,'nearest',{intersect:true},false);if(pts.length>0){const id=d.pace_trend.run_ids[pts[0].index];if(id)openRun(id);}});}
 
-  mk('distChart','bar',d.dist_dist.labels,[{data:d.dist_dist.counts,backgroundColor:['rgba(255,59,48,.7)','rgba(255,149,0,.7)','rgba(52,199,89,.7)','rgba(0,122,255,.7)','rgba(175,82,222,.7)'],borderRadius:6,borderSkipped:false}]);
+  mk('distChart','bar',d.dist_dist.labels,[{data:d.dist_dist.counts,backgroundColor:['rgba(242,73,92,.7)','rgba(245,166,35,.7)','rgba(115,191,105,.7)','rgba(87,148,242,.7)','rgba(184,119,217,.7)'],borderRadius:2,borderSkipped:false}]);
 
   const pg=document.getElementById('prGrid');
   [{label:'Longest Run',val:d.prs.longest?d.prs.longest.miles+' mi':'—',det:d.prs.longest?.date||'',id:d.prs.longest?.id},
@@ -254,8 +234,8 @@ function renderOverviewCharts(){
         +'<span>'+r.date+'</span>'
         +'<span>'+r.pace+'/mi</span>'
         +'<span>'+r.time+'</span>'
-        +(r.hr!=='—'?'<span style="color:var(--red)">'+Math.round(r.hr)+' bpm</span>':'')
-        +(r.elev>0?'<span style="color:var(--green)">'+r.elev+' ft</span>':'')
+        +(r.hr!=='—'?'<span style="color:#f2495c">'+Math.round(r.hr)+' bpm</span>':'')
+        +(r.elev>0?'<span style="color:#73bf69">'+r.elev+' ft</span>':'')
         +'</div>'
         +'</td>';
       rb.appendChild(tr);
@@ -307,25 +287,25 @@ async function loadPerformance(){
 
   // Fitness curve (CTL/ATL/TSB)
   mk('fitChart','line',d.fitness_curve.labels,[
-    {label:'CTL',data:d.fitness_curve.ctl,borderColor:P.blue,backgroundColor:'rgba(0,122,255,.06)',borderWidth:2,fill:true,tension:0.4,pointRadius:0},
-    {label:'ATL',data:d.fitness_curve.atl,borderColor:P.orange,backgroundColor:'transparent',borderWidth:1.5,fill:false,tension:0.4,pointRadius:0},
-    {label:'TSB',data:d.fitness_curve.tsb,borderColor:P.green,backgroundColor:'rgba(52,199,89,.06)',borderWidth:1,borderDash:[3,3],fill:false,tension:0.4,pointRadius:0},
-  ],{plugins:{legend:{display:true,labels:{color:P.tick,font:{family:_FONT,size:10},boxWidth:12}}},scales:{x:{grid:{color:P.grid},ticks:{color:P.tick,font:{size:10},maxTicksLimit:10}},y:{grid:{color:P.grid},ticks:{color:P.tick,font:{size:10}}}}});
+    {label:'CTL',data:d.fitness_curve.ctl,borderColor:'#5794f2',backgroundColor:'rgba(87,148,242,.06)',borderWidth:2,fill:true,tension:0.4,pointRadius:0},
+    {label:'ATL',data:d.fitness_curve.atl,borderColor:'#f5a623',backgroundColor:'transparent',borderWidth:1.5,fill:false,tension:0.4,pointRadius:0},
+    {label:'TSB',data:d.fitness_curve.tsb,borderColor:'#73bf69',backgroundColor:'rgba(115,191,105,.06)',borderWidth:1,borderDash:[3,3],fill:false,tension:0.4,pointRadius:0},
+  ],{plugins:{legend:{display:true,labels:{color:'#8b90a0',font:{family:"'JetBrains Mono',monospace",size:10},boxWidth:12}}},scales:{x:{grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{size:10},maxTicksLimit:10}},y:{grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{size:10}}}}});
 
   // Rolling pace
   if(d.weekly_pace.length>0){
     mk('rollingPaceChart','line',d.weekly_pace.map(w=>w.label),[{
-      data:d.weekly_pace.map(w=>w.pace_sec),borderColor:P.orange,backgroundColor:'rgba(255,149,0,.08)',
-      borderWidth:2,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:P.orange
-    }],{scales:{y:{reverse:true,grid:{color:P.grid},ticks:{color:P.tick,font:{size:10},callback:v=>pFmt(v)}}},plugins:{tooltip:{callbacks:{label:ctx=>` ${pFmt(ctx.parsed.y)}/mi`}}}});
+      data:d.weekly_pace.map(w=>w.pace_sec),borderColor:'#f5a623',backgroundColor:'rgba(245,166,35,.08)',
+      borderWidth:2,fill:true,tension:0.4,pointRadius:3,pointBackgroundColor:'#f5a623'
+    }],{scales:{y:{reverse:true,grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{size:10},callback:v=>pFmt(v)}}},plugins:{tooltip:{callbacks:{label:ctx=>` ${pFmt(ctx.parsed.y)}/mi`}}}});
   }
 
   // Aerobic efficiency
   if(d.eff_trend.length>0){
     mk('effChart','line',d.eff_trend.map(e=>e.label),[{
-      data:d.eff_trend.map(e=>e.eff),borderColor:P.purple,backgroundColor:'rgba(175,82,222,.08)',
-      borderWidth:2,fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:P.purple
-    }],{plugins:{tooltip:{callbacks:{label:ctx=>{const e=d.eff_trend[ctx.dataIndex];return [` efficiency: ${e.eff}`,` avg pace: ${e.pace_fmt}/mi`,` avg HR: ${e.hr} bpm`];}}}},scales:{x:{grid:{color:P.grid},ticks:{color:P.tick,font:{size:10}}},y:{grid:{color:P.grid},ticks:{color:P.tick,font:{size:10}},beginAtZero:false}}});
+      data:d.eff_trend.map(e=>e.eff),borderColor:'#b877d9',backgroundColor:'rgba(184,119,217,.08)',
+      borderWidth:2,fill:true,tension:0.4,pointRadius:4,pointBackgroundColor:'#b877d9'
+    }],{plugins:{tooltip:{callbacks:{label:ctx=>{const e=d.eff_trend[ctx.dataIndex];return [` efficiency: ${e.eff}`,` avg pace: ${e.pace_fmt}/mi`,` avg HR: ${e.hr} bpm`];}}}},scales:{x:{grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{size:10}}},y:{grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{size:10}},beginAtZero:false}}});
   }
 
   // PR progression
@@ -337,8 +317,8 @@ async function loadPerformance(){
   // Long runs
   if(d.long_run_chart.labels.length>0){
     mk('longRunChart','bar',d.long_run_chart.labels,[
-      {data:d.long_run_chart.miles,backgroundColor:'rgba(0,122,255,.65)',borderRadius:6,borderSkipped:false,yAxisID:'y'},
-    ],{scales:{x:{grid:{color:P.grid},ticks:{color:P.tick,font:{size:9},maxRotation:45}},y:{grid:{color:P.grid},ticks:{color:P.tick,font:{size:10}},beginAtZero:true}},plugins:{tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y} mi`}}}});
+      {data:d.long_run_chart.miles,backgroundColor:'rgba(87,148,242,.65)',borderRadius:2,borderSkipped:false,yAxisID:'y'},
+    ],{scales:{x:{grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{size:9},maxRotation:45}},y:{grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{size:10}},beginAtZero:true}},plugins:{tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y} mi`}}}});
   }
 
   // Heatmap
@@ -371,9 +351,9 @@ function showPR(key){
   const pts=_prData[key]||[];
   if(pts.length===0){mk('prProgChart','line',[],[]);return;}
   mk('prProgChart','line',pts.map(p=>p.date),[{
-    data:pts.map(p=>p.pace_sec),borderColor:P.red,backgroundColor:'rgba(255,59,48,.08)',
-    borderWidth:2,fill:true,tension:0.3,pointRadius:5,pointBackgroundColor:P.red,pointHoverRadius:8
-  }],{scales:{y:{reverse:true,grid:{color:P.grid},ticks:{color:P.tick,font:{size:10},callback:v=>pFmt(v)}}},plugins:{tooltip:{callbacks:{label:ctx=>` PR: ${pFmt(ctx.parsed.y)}/mi`}}}});
+    data:pts.map(p=>p.pace_sec),borderColor:'#f2495c',backgroundColor:'rgba(242,73,92,.08)',
+    borderWidth:2,fill:true,tension:0.3,pointRadius:5,pointBackgroundColor:'#f2495c',pointHoverRadius:8
+  }],{scales:{y:{reverse:true,grid:{color:'#1a1c22'},ticks:{color:'#5a5f72',font:{size:10},callback:v=>pFmt(v)}}},plugins:{tooltip:{callbacks:{label:ctx=>` PR: ${pFmt(ctx.parsed.y)}/mi`}}}});
 }
 
 // ── AI Insights ─────────────────────────────────────────────────────────────
@@ -421,12 +401,12 @@ async function loadInsights(){
     for(let i=0;i<parts.length;i++){
       html += i%2===1 ? '<strong>'+parts[i]+'</strong>' : parts[i].split('\n').join('<br>');
     }
-    const modelTag=data.model ? '<span style="color:var(--blue)">'+data.model+'</span>' : 'AI';
-    document.getElementById('insightsBody').innerHTML='<div class="insights-box">'+html+'<div style="margin-top:12px;font-size:.62rem;color:var(--sub)">Based on '+data.weeks_analyzed+' weeks &middot; Powered by '+modelTag+'</div></div>';
+    const modelTag=data.model ? '<span style="color:#5794f2">'+data.model+'</span>' : 'AI';
+    document.getElementById('insightsBody').innerHTML='<div class="insights-box">'+html+'<div style="margin-top:12px;font-size:.62rem;color:#5a5f72">Based on '+data.weeks_analyzed+' weeks &middot; Powered by '+modelTag+'</div></div>';
     btn.textContent='Regenerate'; btn.disabled=false;
   } catch(e){
     clearInterval(prog);
-    document.getElementById('insightsBody').innerHTML='<div style="padding:14px;color:var(--red);font-size:.75rem">Error: '+e.message+'</div>';
+    document.getElementById('insightsBody').innerHTML='<div style="padding:14px;color:#f2495c;font-size:.75rem">Error: '+e.message+'</div>';
     btn.disabled=false; btn.textContent='Generate insights';
   }
 }
@@ -446,22 +426,22 @@ function showWeekPopover(weekLabel, week, allData){
 
   const pop=document.createElement('div');
   pop.id='weekPopover';
-  pop.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:var(--card);border:1px solid var(--hairline);border-radius:20px;padding:16px;z-index:500;min-width:280px;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.6)';
+  pop.style.cssText='position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1e2028;border:1px solid #2e3140;border-radius:4px;padding:16px;z-index:500;min-width:280px;max-width:400px;box-shadow:0 8px 32px rgba(0,0,0,.6)';
 
   // Header
   const hdr=document.createElement('div');
   hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:10px';
-  hdr.innerHTML='<span style="font-family:var(--font);font-weight:700;color:var(--text);font-size:.85rem">Week of '+weekLabel+'</span>'
-    +'<span style="font-size:.72rem;color:var(--green)">'+week.miles+' mi · '+week.runs+' run'+(week.runs!==1?'s':'')+'</span>';
+  hdr.innerHTML='<span style="font-family:Syne,sans-serif;font-weight:700;color:#d4d8e2;font-size:.85rem">Week of '+weekLabel+'</span>'
+    +'<span style="font-size:.72rem;color:#73bf69">'+week.miles+' mi · '+week.runs+' run'+(week.runs!==1?'s':'')+'</span>';
   pop.appendChild(hdr);
 
   // Run rows
   runDetails.forEach(r=>{
     const row=document.createElement('div');
-    row.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:2px;cursor:pointer;border-bottom:1px solid var(--inset)';
-    row.innerHTML='<span style="font-size:.78rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">'+r.name+'</span>'
-      +'<span style="font-size:.75rem;color:var(--orange);margin-left:8px;white-space:nowrap">'+r.miles+' mi &nbsp; '+r.pace+'/mi</span>';
-    row.addEventListener('mouseover',()=>{row.style.background='var(--inset)';});
+    row.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:2px;cursor:pointer;border-bottom:1px solid #252830';
+    row.innerHTML='<span style="font-size:.78rem;color:#d4d8e2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px">'+r.name+'</span>'
+      +'<span style="font-size:.75rem;color:#f5a623;margin-left:8px;white-space:nowrap">'+r.miles+' mi &nbsp; '+r.pace+'/mi</span>';
+    row.addEventListener('mouseover',()=>{row.style.background='#252830';});
     row.addEventListener('mouseout',()=>{row.style.background='';});
     row.addEventListener('click',()=>{closePopover();openRun(r.id);});
     pop.appendChild(row);
@@ -472,7 +452,7 @@ function showWeekPopover(weekLabel, week, allData){
   ftr.style.cssText='margin-top:10px;text-align:right';
   const closeBtn=document.createElement('button');
   closeBtn.textContent='close';
-  closeBtn.style.cssText='background:none;border:1px solid var(--hairline);color:var(--sub);font-size:.68rem;padding:3px 10px;cursor:pointer;border-radius:2px;font-family:JetBrains Mono,monospace';
+  closeBtn.style.cssText='background:none;border:1px solid #2e3140;color:#5a5f72;font-size:.68rem;padding:3px 10px;cursor:pointer;border-radius:2px;font-family:JetBrains Mono,monospace';
   closeBtn.addEventListener('click',closePopover);
   ftr.appendChild(closeBtn);
   pop.appendChild(ftr);
@@ -541,7 +521,7 @@ function renderFuelHeader(d) {
     if (d.google_connected) {
       gcEl.innerHTML = '<span class="bk bkg">● Runna connected</span>';
     } else {
-      gcEl.innerHTML = '<a href="/google/login" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;background:var(--accent-tint);padding:6px 12px;border-radius:999px">Connect Runna calendar</a>';
+      gcEl.innerHTML = '<a href="/google/login" style="color:var(--orange);font-size:.68rem;text-decoration:none;border:1px solid var(--orange);padding:2px 8px;border-radius:2px">Connect Runna calendar</a>';
     }
   }
 
@@ -714,21 +694,21 @@ function renderFuelDetail(day) {
 
     <!-- Peloton recommendation -->
     ${day.peloton && day.peloton.main ? `
-    <div style="margin-top:10px;background:rgba(175,82,222,.06);border:1px solid rgba(175,82,222,.2);border-radius:2px;padding:10px 12px">
+    <div style="margin-top:10px;background:rgba(168,85,247,.06);border:1px solid rgba(168,85,247,.2);border-radius:2px;padding:10px 12px">
       <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--purple);margin-bottom:6px">◆ Peloton Cross-Training</div>
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
         <div>
           <div style="font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:1px">${day.peloton.main.title}</div>
           <div style="font-family:var(--mono);font-size:.62rem;color:var(--muted)">${day.peloton.main.instructor} · ${day.peloton.main.duration_min} min · ${day.peloton.category.toUpperCase()}</div>
         </div>
-        ${day.peloton.main.url ? `<a href="${day.peloton.main.url}" target="_blank" style="font-family:var(--mono);font-size:.6rem;color:var(--purple);text-decoration:none;border:1px solid rgba(175,82,222,.3);padding:3px 8px;border-radius:2px;background:rgba(175,82,222,.08);white-space:nowrap;margin-left:8px">Open →</a>` : ''}
+        ${day.peloton.main.url ? `<a href="${day.peloton.main.url}" target="_blank" style="font-family:var(--mono);font-size:.6rem;color:var(--purple);text-decoration:none;border:1px solid rgba(168,85,247,.3);padding:3px 8px;border-radius:2px;background:rgba(168,85,247,.08);white-space:nowrap;margin-left:8px">Open →</a>` : ''}
       </div>
       <div style="font-size:.68rem;color:var(--muted2);font-style:italic;margin-bottom:${day.peloton.core_addon ? '6px' : '0'}">${day.peloton.reason}</div>
       ${day.peloton.core_addon ? `
-      <div style="margin-top:6px;padding:6px 8px;background:rgba(0,122,255,.07);border:1px solid rgba(0,122,255,.2);border-radius:2px">
+      <div style="margin-top:6px;padding:6px 8px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:2px">
         <div style="font-family:var(--mono);font-size:.55rem;text-transform:uppercase;letter-spacing:.08em;color:var(--blue);margin-bottom:2px">+ Core add-on</div>
         <div style="font-size:.72rem;color:var(--muted2)">${day.peloton.core_addon.title} · ${day.peloton.core_addon.instructor} · ${day.peloton.core_addon.duration_min} min</div>
-        ${day.peloton.core_addon.url ? `<a href="${day.peloton.core_addon.url}" target="_blank" style="font-family:var(--mono);font-size:.58rem;color:var(--blue);text-decoration:none;border:1px solid rgba(0,122,255,.3);padding:2px 6px;border-radius:2px;background:rgba(0,122,255,.07);display:inline-block;margin-top:4px">Open →</a>` : ''}
+        ${day.peloton.core_addon.url ? `<a href="${day.peloton.core_addon.url}" target="_blank" style="font-family:var(--mono);font-size:.58rem;color:var(--blue);text-decoration:none;border:1px solid rgba(59,130,246,.3);padding:2px 6px;border-radius:2px;background:rgba(59,130,246,.07);display:inline-block;margin-top:4px">Open →</a>` : ''}
       </div>` : ''}
     </div>` : ''}
   `;
@@ -798,7 +778,7 @@ function renderTrain(d) {
   if (gcEl) {
     gcEl.innerHTML = d.google_connected
       ? '<span class="bk bkg">◆ Runna connected</span>'
-      : '<a href="/google/login" style="color:var(--accent);font-size:13px;font-weight:600;text-decoration:none;background:var(--accent-tint);padding:6px 12px;border-radius:999px">Connect Runna calendar</a>';
+      : '<a href="/google/login" style="color:var(--orange);font-size:.68rem;text-decoration:none;border:1px solid var(--orange);padding:2px 8px;border-radius:2px">Connect Runna calendar</a>';
   }
   const grid = document.getElementById('trainWeekGrid');
   if (!grid) return;
@@ -820,13 +800,13 @@ function buildTrainDayCard(day) {
   }[day.source] || 'var(--muted)';
 
   const todayBadge = day.is_today
-    ? ' <span style="font-size:11px;font-weight:600;color:var(--on-accent);background:var(--accent);padding:2px 8px;border-radius:999px">today</span>'
+    ? ' <span style="font-family:var(--mono);font-size:.55rem;color:var(--orange);border:1px solid rgba(252,76,2,.3);padding:1px 5px;border-radius:2px">today</span>'
     : '';
 
   let bodyHtml = '';
 
   if (day.day_type !== 'rest' || day.source === 'strava') {
-    const badgeBg = {strava:'rgba(255,149,0,.12)',runna:'rgba(0,122,255,.12)',rest:'rgba(90,96,112,.1)'}[day.source] || 'rgba(90,96,112,.1)';
+    const badgeBg = {strava:'rgba(252,76,2,.12)',runna:'rgba(59,130,246,.12)',rest:'rgba(90,96,112,.1)'}[day.source] || 'rgba(90,96,112,.1)';
     bodyHtml += '<div class="train-run-badge" style="background:' + badgeBg + ';color:' + sourceColor + ';border:1px solid ' + sourceColor + '33">'
       + (day.source==='strava' ? '● Strava' : day.source==='runna' ? '◆ Runna' : '○ Rest')
       + '</div>'
@@ -1304,13 +1284,13 @@ async function loadWeightChart() {
     ctx.clearRect(0, 0, W, H);
 
     // Grid lines
-    ctx.strokeStyle = P.grid;
+    ctx.strokeStyle = '#1e2229';
     ctx.lineWidth = 1;
     for (let i = 0; i <= 4; i++) {
       const y = padT + (plotH / 4) * i;
       ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W-padR, y); ctx.stroke();
       const val = Math.round(maxW - ((maxW - minW) / 4) * i);
-      ctx.fillStyle = P.tick;
+      ctx.fillStyle = '#5a6070';
       ctx.font = '9px monospace';
       ctx.textAlign = 'right';
       ctx.fillText(val, padL - 4, y + 3);
@@ -1320,18 +1300,18 @@ async function loadWeightChart() {
     const goalW = 200;
     if (goalW >= minW && goalW <= maxW) {
       const gy = padT + plotH * (1 - (goalW - minW) / (maxW - minW));
-      ctx.strokeStyle = P.red+'40';
+      ctx.strokeStyle = '#ef444440';
       ctx.setLineDash([4, 4]);
       ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W-padR, gy); ctx.stroke();
       ctx.setLineDash([]);
-      ctx.fillStyle = P.red;
+      ctx.fillStyle = '#ef4444';
       ctx.font = '9px monospace';
       ctx.textAlign = 'left';
       ctx.fillText('goal', padL + 4, gy - 3);
     }
 
     // Line
-    ctx.strokeStyle = P.orange;
+    ctx.strokeStyle = '#fc4c02';
     ctx.lineWidth = 2;
     ctx.beginPath();
     entries.forEach(function(e, i) {
@@ -1345,13 +1325,13 @@ async function loadWeightChart() {
     entries.forEach(function(e, i) {
       const x = padL + (i / (entries.length - 1)) * plotW;
       const y = padT + plotH * (1 - (e.weight - minW) / (maxW - minW));
-      ctx.fillStyle = P.orange;
+      ctx.fillStyle = '#fc4c02';
       ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI*2); ctx.fill();
     });
 
     // X labels (show every nth)
     const step = Math.max(1, Math.floor(entries.length / 6));
-    ctx.fillStyle = P.tick;
+    ctx.fillStyle = '#5a6070';
     ctx.font = '9px monospace';
     ctx.textAlign = 'center';
     entries.forEach(function(e, i) {
@@ -1424,7 +1404,7 @@ function renderRacePlan(d) {
   });
 
   if (d.fuel_note) {
-    html += '<div style="margin-top:8px;padding:8px 10px;background:rgba(255,149,0,.08);border:1px solid rgba(255,149,0,.2);border-radius:2px;font-size:.7rem;color:var(--muted2);line-height:1.7">' +
+    html += '<div style="margin-top:8px;padding:8px 10px;background:rgba(252,76,2,.08);border:1px solid rgba(252,76,2,.2);border-radius:2px;font-size:.7rem;color:var(--muted2);line-height:1.7">' +
       '<span style="color:var(--orange);font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.08em">Fuel note</span><br>' +
       d.fuel_note + '</div>';
   }
@@ -1519,7 +1499,3 @@ async function deleteShoe(id) {
 
 
 load();
-
-// Charts capture palette colors when drawn; redraw on theme change.
-new MutationObserver(()=>location.reload()).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(!document.documentElement.getAttribute('data-theme'))location.reload();});

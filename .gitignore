@@ -5,3 +5,18 @@ __pycache__/
 peloton_cache.json
 google_token.json
 .DS_Store
+tokens.json
+
+# local environment
+venv/
+
+# old copies / scratch (previous version lives in git tag v1.0.0)
+backup/
+static.old/
+stride-glass/
+*.zip
+
+# personal setup and data
+google_oauth_patch.py
+GOOGLE_SETUP.md
+recovery_meals.json

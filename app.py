@@ -9,6 +9,53 @@ app.secret_key = "stride-local-secret-key-do-not-share"
 
 def CLIENT_ID():     return _read_env("STRAVA_CLIENT_ID")
 def CLIENT_SECRET(): return _read_env("STRAVA_CLIENT_SECRET")
+
+# ── Token persistence ─────────────────────────────────────────────────────────
+# Tokens stored in tokens.json so they survive server restarts.
+# This is safe for a local LAN app — don't expose this file publicly.
+
+import json as _json_mod
+
+_TOKENS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "tokens.json")
+
+def _load_tokens():
+    try:
+        return _json_mod.load(open(_TOKENS_PATH))
+    except Exception:
+        return {}
+
+def _save_tokens(data):
+    try:
+        _json_mod.dump(data, open(_TOKENS_PATH, "w"), indent=2)
+    except Exception:
+        pass
+
+def _get_token(key, default=None):
+    """Get a token from session (fast) or file (fallback after restart)."""
+    val = session.get(key)
+    if val:
+        return val
+    # Load from file and restore to session
+    tokens = _load_tokens()
+    val = tokens.get(key, default)
+    if val:
+        session[key] = val
+    return val
+
+def _set_token(key, value):
+    """Store token in both session and file."""
+    session[key] = value
+    tokens = _load_tokens()
+    tokens[key] = value
+    _save_tokens(tokens)
+
+def _clear_tokens():
+    """Clear all tokens from session and file."""
+    for key in ["access_token", "athlete", "strava_refresh_token", "strava_token_expiry",
+                "google_access_token", "google_refresh_token", "google_token_expiry"]:
+        session.pop(key, None)
+    _save_tokens({})
+
 def _read_env(key, default=""):
     val = os.environ.get(key, "")
     if val: return val
@@ -24,6 +71,13 @@ def _read_env(key, default=""):
     return default
 
 REDIRECT_URI = _read_env("STRIDE_REDIRECT_URI", "http://localhost:5000/callback")
+
+# ── App version ───────────────────────────────────────────────────────────────
+APP_VERSION  = "2.4.0"
+APP_NAME     = "Stride"
+APP_BUILT_BY = "David Findley"
+APP_YEAR     = "2025–2026"
+APP_STACK    = "Flask · Python · Strava API · Runna · Peloton"
 
 STRAVA_AUTH_URL  = "https://www.strava.com/oauth/authorize"
 STRAVA_TOKEN_URL = "https://www.strava.com/oauth/token"
@@ -62,13 +116,47 @@ def s_to_hms(s):
     h,m,sec = int(s//3600),int((s%3600)//60),int(s%60)
     return f"{h}h {m}m" if h else f"{m}m {sec}s"
 def ft(m): return round(m * 3.28084)
-def get_headers(): return {"Authorization": f"Bearer {session.get('access_token')}"}
+def get_headers():
+    token = _get_token("access_token")
+    if not token:
+        return {"Authorization": "Bearer none"}
+    # Auto-refresh if expired
+    expiry = _get_token("strava_token_expiry", "")
+    if expiry:
+        try:
+            if datetime.now() >= datetime.fromisoformat(expiry) - timedelta(minutes=10):
+                token = _refresh_strava_token() or token
+        except Exception:
+            pass
+    return {"Authorization": f"Bearer {token}"}
+
+def _refresh_strava_token():
+    """Use refresh token to get a new Strava access token."""
+    refresh = _get_token("strava_refresh_token", "")
+    if not refresh:
+        return None
+    try:
+        resp = requests.post(STRAVA_TOKEN_URL, data={
+            "client_id":     CLIENT_ID(),
+            "client_secret": CLIENT_SECRET(),
+            "refresh_token": refresh,
+            "grant_type":    "refresh_token",
+        })
+        data = resp.json()
+        if "access_token" in data:
+            _set_token("access_token",         data["access_token"])
+            _set_token("strava_refresh_token", data.get("refresh_token", refresh))
+            _set_token("strava_token_expiry",  (datetime.now() + timedelta(seconds=data.get("expires_in", 21600))).isoformat())
+            return data["access_token"]
+    except Exception:
+        pass
+    return None
 
 def get_google_headers():
-    token = session.get("google_access_token")
+    token = _get_token("google_access_token")
     if not token:
         return None
-    expiry_str = session.get("google_token_expiry", "")
+    expiry_str = _get_token("google_token_expiry", "")
     if expiry_str:
         try:
             expiry = datetime.fromisoformat(expiry_str)
@@ -81,7 +169,7 @@ def get_google_headers():
     return {"Authorization": f"Bearer {token}"}
 
 def _refresh_google_token():
-    refresh_token = session.get("google_refresh_token")
+    refresh_token = _get_token("google_refresh_token")
     if not refresh_token:
         return None
     try:
@@ -93,7 +181,7 @@ def _refresh_google_token():
         })
         data = resp.json()
         if "access_token" in data:
-            session["google_access_token"] = data["access_token"]
+            _set_token("google_access_token", data["access_token"])
             session["google_token_expiry"] = (
                 datetime.now() + timedelta(seconds=data.get("expires_in", 3600))
             ).isoformat()
@@ -375,7 +463,7 @@ def process_streams(streams_data):
 # ── Routes ────────────────────────────────────────────────────────────────────
 @app.route("/")
 def index():
-    if not session.get("access_token"): return render_template_string(LOGIN_PAGE)
+    if not _get_token("access_token"): return render_template_string(LOGIN_PAGE)
     return render_template_string(DASHBOARD_PAGE)
 
 @app.route("/login")
@@ -393,19 +481,21 @@ def callback():
         "code":code,"grant_type":"authorization_code"})
     data = resp.json()
     if "access_token" not in data: return f"Token error: {data}", 400
-    session["access_token"] = data["access_token"]
-    session["athlete"]      = data.get("athlete", {})
+    _set_token("access_token",          data["access_token"])
+    _set_token("strava_refresh_token",  data.get("refresh_token", ""))
+    _set_token("strava_token_expiry",   (datetime.now() + timedelta(seconds=data.get("expires_in", 21600))).isoformat())
+    _set_token("athlete",               _json_mod.dumps(data.get("athlete", {})))
     return redirect("/")
 
 @app.route("/api/stats")
 def api_stats():
-    if not session.get("access_token"): return jsonify({"error":"not authenticated"}), 401
+    if not _get_token("access_token"): return jsonify({"error":"not authenticated"}), 401
     cache_key = f"stats_{session.get('access_token', '')[:16]}"
     cached = cache_get(cache_key)
     if cached:
         return jsonify(cached)
     stats = compute_stats(fetch_runs_only())
-    stats["athlete"] = session.get("athlete", {})
+    stats["athlete"] = _json_mod.loads(_get_token("athlete", "{}") or "{}")
     cache_set(cache_key, stats)
     return jsonify(stats)
 
@@ -417,7 +507,7 @@ def api_cache_clear():
 @app.route("/api/run/<int:run_id>")
 def api_run(run_id):
     """Full activity detail + decoded route + streams."""
-    if not session.get("access_token"):
+    if not _get_token("access_token"):
         return jsonify({"error": "not authenticated"}), 401
     try:
         # Fetch activity detail
@@ -492,7 +582,7 @@ def api_run(run_id):
 @app.route("/api/debug/run/<int:run_id>")
 def api_debug_run(run_id):
     """Raw Strava responses — open in browser to diagnose errors."""
-    if not session.get("access_token"):
+    if not _get_token("access_token"):
         return jsonify({"error": "not authenticated"}), 401
     act_resp = requests.get(f"{STRAVA_API_BASE}/activities/{run_id}",
                             headers=get_headers(), params={"include_all_efforts": False})
@@ -514,7 +604,7 @@ def static_files(filename):
 
 @app.route("/logout")
 def logout():
-    session.clear(); return redirect("/")
+    _clear_tokens(); session.clear(); return redirect("/")
 
 @app.route("/google/login")
 def google_login():
@@ -547,28 +637,26 @@ def google_callback():
     data = resp.json()
     if "access_token" not in data:
         return f"Google token error: {data}", 400
-    session["google_access_token"]  = data["access_token"]
-    session["google_refresh_token"] = data.get("refresh_token", "")
-    session["google_token_expiry"]  = (
-        datetime.now() + timedelta(seconds=data.get("expires_in", 3600))
-    ).isoformat()
+    _set_token("google_access_token",  data["access_token"])
+    _set_token("google_refresh_token", data.get("refresh_token", ""))
+    _set_token("google_token_expiry",  (datetime.now() + timedelta(seconds=data.get("expires_in", 3600))).isoformat())
     return redirect("/")
 
 @app.route("/google/disconnect")
 def google_disconnect():
-    session.pop("google_access_token", None)
+    _set_token("google_access_token", ""); session.pop("google_access_token", None)
     session.pop("google_refresh_token", None)
     session.pop("google_token_expiry", None)
     return redirect("/")
 
 @app.route("/api/google/status")
 def api_google_status():
-    connected = bool(session.get("google_access_token"))
+    connected = bool(_get_token("google_access_token"))
     return jsonify({"connected": connected})
 
 @app.route("/api/google/calendar/runna")
 def api_google_calendar_runna():
-    if not session.get("access_token"):
+    if not _get_token("access_token"):
         return jsonify({"error": "not authenticated"}), 401
     headers = get_google_headers()
     if not headers:
@@ -579,7 +667,7 @@ def api_google_calendar_runna():
             headers=headers
         )
         if cal_resp.status_code == 401:
-            session.pop("google_access_token", None)
+            _set_token("google_access_token", ""); session.pop("google_access_token", None)
             return jsonify({"connected": False, "events": []})
         if cal_resp.status_code != 200:
             return jsonify({"error": f"Calendar list error: {cal_resp.status_code}"}), 500
@@ -642,7 +730,7 @@ def api_google_calendar_runna():
 
 @app.route("/api/fuel/plan")
 def api_fuel_plan():
-    if not session.get("access_token"):
+    if not _get_token("access_token"):
         return jsonify({"error": "not authenticated"}), 401
     try:
         from fuel import classify_day, plan_day, DAY_TYPE_COLOR
@@ -665,7 +753,7 @@ def api_fuel_plan():
 
         # ── Next 14 days from Runna calendar ────────────────────────────
         runna_by_date = {}
-        google_connected = bool(session.get("google_access_token"))
+        google_connected = bool(_get_token("google_access_token"))
         if google_connected:
             headers = get_google_headers()
             if headers:
@@ -816,7 +904,7 @@ def api_training_week():
     - Peloton workout recommendations for non-run days
     - Core add-ons included where appropriate
     """
-    if not session.get("access_token"):
+    if not _get_token("access_token"):
         return jsonify({"error": "not authenticated"}), 401
     try:
         from fuel import classify_day, classify_runna_event, plan_day, DAY_TYPE_COLOR, classify_activity, TRAINING_TYPES
@@ -838,7 +926,7 @@ def api_training_week():
 
         # ── Fetch Runna calendar ─────────────────────────────────────────
         runna_by_date = {}
-        google_connected = bool(session.get("google_access_token"))
+        google_connected = bool(_get_token("google_access_token"))
         if google_connected:
             headers = get_google_headers()
             if headers:
@@ -935,7 +1023,7 @@ def api_training_week():
 @app.route("/api/peloton/refresh", methods=["POST"])
 def api_peloton_refresh():
     """Manually refresh the Peloton class cache."""
-    if not session.get("access_token"):
+    if not _get_token("access_token"):
         return jsonify({"error": "not authenticated"}), 401
     try:
         from peloton import refresh_cache
@@ -948,7 +1036,7 @@ def api_peloton_refresh():
 @app.route("/api/fuel/weight", methods=["POST"])
 def api_fuel_weight():
     """Update ATHLETE_WEIGHT_LBS in the .env file."""
-    if not session.get("access_token"):
+    if not _get_token("access_token"):
         return jsonify({"error": "not authenticated"}), 401
     try:
         data = request.get_json()
@@ -990,7 +1078,7 @@ def api_fuel_weight():
 @app.route("/api/meals")
 def api_meals():
     """Serve the meals database JSON."""
-    if not session.get("access_token"):
+    if not _get_token("access_token"):
         return jsonify({"error": "not authenticated"}), 401
     try:
         import json as _json
@@ -1001,6 +1089,317 @@ def api_meals():
         return jsonify({"error": "meals.json not found — add it to your Stride folder"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/summary/week")
+def api_weekly_summary():
+    """Monday morning weekly digest — last week's stats + AI insight."""
+    if not _get_token("access_token"): return jsonify({"error":"not authenticated"}), 401
+    try:
+        runs = fetch_runs_only()
+        now  = datetime.now()
+        # Find last week's Monday-Sunday
+        days_since_mon = now.weekday()
+        this_mon = now - timedelta(days=days_since_mon)
+        last_mon = this_mon - timedelta(days=7)
+        last_sun = this_mon - timedelta(days=1)
+
+        last_week = [r for r in runs if
+            last_mon.date() <= datetime.strptime(r["start_date_local"][:10], "%Y-%m-%d").date() <= last_sun.date()]
+        this_week = [r for r in runs if
+            datetime.strptime(r["start_date_local"][:10], "%Y-%m-%d").date() >= this_mon.date()]
+
+        def week_stats(wk):
+            if not wk: return {"miles":0,"runs":0,"time":0,"avg_hr":None,"longest":0}
+            miles   = sum(m_to_mi(r["distance"]) for r in wk)
+            time_s  = sum(r.get("moving_time",0) for r in wk)
+            hrs     = [r["average_heartrate"] for r in wk if r.get("average_heartrate")]
+            longest = max((m_to_mi(r["distance"]) for r in wk), default=0)
+            return {
+                "miles":   round(miles,1),
+                "runs":    len(wk),
+                "time":    round(time_s/3600,1),
+                "avg_hr":  round(sum(hrs)/len(hrs)) if hrs else None,
+                "longest": round(longest,1),
+            }
+
+        lw = week_stats(last_week)
+        tw = week_stats(this_week)
+
+        # Week over week deltas
+        delta_miles = round(lw["miles"] - (week_stats([r for r in runs if
+            (this_mon - timedelta(days=14)).date() <=
+            datetime.strptime(r["start_date_local"][:10], "%Y-%m-%d").date() <=
+            (this_mon - timedelta(days=8)).date()])["miles"]), 1)
+
+        return jsonify({
+            "last_week":   lw,
+            "this_week":   tw,
+            "delta_miles": delta_miles,
+            "week_label":  last_mon.strftime("%b %d") + " – " + last_sun.strftime("%b %d"),
+            "today_dow":   now.strftime("%A"),
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+
+
+@app.route("/api/weight/history", methods=["GET","POST"])
+def api_weight_history():
+    """Store and retrieve weight log entries."""
+    if not _get_token("access_token"): return jsonify({"error":"not authenticated"}), 401
+    import json as _json
+    weight_log_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "weight_log.json")
+
+    if request.method == "POST":
+        data = request.get_json()
+        weight = float(data.get("weight_lbs", 0))
+        date   = data.get("date", datetime.now().strftime("%Y-%m-%d"))
+        if weight < 100 or weight > 400:
+            return jsonify({"error": "invalid weight"}), 400
+        try:
+            log = _json.load(open(weight_log_path)) if os.path.exists(weight_log_path) else []
+        except Exception:
+            log = []
+        # Update or append
+        existing = next((e for e in log if e["date"] == date), None)
+        if existing:
+            existing["weight"] = weight
+        else:
+            log.append({"date": date, "weight": weight})
+        log.sort(key=lambda x: x["date"])
+        _json.dump(log, open(weight_log_path,"w"), indent=2)
+        return jsonify({"ok": True, "entries": len(log)})
+    else:
+        try:
+            log = _json.load(open(weight_log_path)) if os.path.exists(weight_log_path) else []
+        except Exception:
+            log = []
+        return jsonify({"entries": log})
+
+
+@app.route("/api/shoes", methods=["GET","POST","DELETE"])
+def api_shoes():
+    """Shoe tracker — log shoes with mileage alerts."""
+    if not _get_token("access_token"): return jsonify({"error":"not authenticated"}), 401
+    import json as _json
+    shoes_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shoes.json")
+
+    if request.method == "POST":
+        data   = request.get_json()
+        name   = data.get("name","").strip()
+        miles  = float(data.get("start_miles", 0))
+        alert  = int(data.get("alert_miles", 400))
+        shoe_id = data.get("id", datetime.now().strftime("%Y%m%d%H%M%S"))
+        if not name: return jsonify({"error":"name required"}), 400
+        try:
+            shoes = _json.load(open(shoes_path)) if os.path.exists(shoes_path) else []
+        except Exception:
+            shoes = []
+        existing = next((s for s in shoes if s["id"] == shoe_id), None)
+        if existing:
+            existing.update({"name":name,"start_miles":miles,"alert_miles":alert})
+        else:
+            shoes.append({"id":shoe_id,"name":name,"start_miles":miles,"alert_miles":alert,"added":datetime.now().strftime("%Y-%m-%d")})
+        _json.dump(shoes, open(shoes_path,"w"), indent=2)
+        return jsonify({"ok": True})
+
+    elif request.method == "DELETE":
+        shoe_id = request.args.get("id")
+        try:
+            shoes = _json.load(open(shoes_path)) if os.path.exists(shoes_path) else []
+        except Exception:
+            shoes = []
+        shoes = [s for s in shoes if s["id"] != shoe_id]
+        _json.dump(shoes, open(shoes_path,"w"), indent=2)
+        return jsonify({"ok": True})
+
+    else:
+        # GET — return shoes with calculated mileage from Strava
+        try:
+            shoes = _json.load(open(shoes_path)) if os.path.exists(shoes_path) else []
+        except Exception:
+            shoes = []
+        runs = fetch_runs_only()
+        # Try to match by gear_id from Strava, otherwise sum all runs since added date
+        for shoe in shoes:
+            gear_id  = shoe.get("gear_id")
+            added_dt = shoe.get("added", "2020-01-01")
+            if gear_id:
+                shoe_runs = [r for r in runs if r.get("gear_id") == gear_id]
+            else:
+                shoe_runs = [r for r in runs if r.get("start_date_local","") >= added_dt]
+            run_miles = round(sum(m_to_mi(r["distance"]) for r in shoe_runs), 1)
+            shoe["run_miles"]   = run_miles
+            shoe["total_miles"] = round(run_miles + shoe.get("start_miles",0), 1)
+            shoe["alert_pct"]   = round(shoe["total_miles"] / shoe.get("alert_miles",400) * 100)
+            shoe["alert_status"] = "ok" if shoe["alert_pct"] < 80 else ("warning" if shoe["alert_pct"] < 100 else "replace")
+        return jsonify({"shoes": shoes})
+
+
+@app.route("/api/hr/zones")
+def api_hr_zones():
+    """HR zone distribution over last N weeks."""
+    if not _get_token("access_token"): return jsonify({"error":"not authenticated"}), 401
+    try:
+        weeks = int(request.args.get("weeks", 4))
+        runs  = fetch_runs_only()
+        now   = datetime.now()
+        cutoff = now - timedelta(weeks=weeks)
+        recent = [r for r in runs if
+            datetime.strptime(r["start_date_local"][:10], "%Y-%m-%d") >= cutoff]
+
+        zones = {"z1":0,"z2":0,"z3":0,"z4":0,"z5":0}
+        zone_labels = {"z1":"Z1 <60%","z2":"Z2 60-70%","z3":"Z3 70-80%","z4":"Z4 80-90%","z5":"Z5 90%+"}
+        zone_colors = {"z1":"#3b82f6","z2":"#22c55e","z3":"#eab308","z4":"#f97316","z5":"#ef4444"}
+        total_time  = 0
+
+        for r in recent:
+            avg_hr   = r.get("average_heartrate")
+            mov_time = r.get("moving_time", 0)
+            if not avg_hr or not mov_time: continue
+            pct = avg_hr / 190
+            if pct < 0.60:   zones["z1"] += mov_time
+            elif pct < 0.70: zones["z2"] += mov_time
+            elif pct < 0.80: zones["z3"] += mov_time
+            elif pct < 0.90: zones["z4"] += mov_time
+            else:             zones["z5"] += mov_time
+            total_time += mov_time
+
+        # Convert to percentages and minutes
+        result = []
+        for zk, zt in zones.items():
+            pct_val = round(zt / total_time * 100) if total_time > 0 else 0
+            result.append({
+                "zone":    zk,
+                "label":   zone_labels[zk],
+                "color":   zone_colors[zk],
+                "minutes": round(zt / 60),
+                "pct":     pct_val,
+            })
+
+        # Weekly zone breakdown for trend chart
+        weekly = []
+        for w in range(weeks-1, -1, -1):
+            wk_start = now - timedelta(weeks=w+1)
+            wk_end   = now - timedelta(weeks=w)
+            wk_runs  = [r for r in runs if wk_start <=
+                datetime.strptime(r["start_date_local"][:10], "%Y-%m-%d") < wk_end]
+            wz = {"z1":0,"z2":0,"z3":0,"z4":0,"z5":0,"total":0}
+            for r in wk_runs:
+                avg_hr = r.get("average_heartrate")
+                mt     = r.get("moving_time",0)
+                if not avg_hr: continue
+                p = avg_hr / 190
+                if p < 0.60:   wz["z1"] += mt
+                elif p < 0.70: wz["z2"] += mt
+                elif p < 0.80: wz["z3"] += mt
+                elif p < 0.90: wz["z4"] += mt
+                else:           wz["z5"] += mt
+                wz["total"] += mt
+            tt = wz["total"] or 1
+            weekly.append({
+                "label": wk_start.strftime("%b %d"),
+                "z1": round(wz["z1"]/tt*100), "z2": round(wz["z2"]/tt*100),
+                "z3": round(wz["z3"]/tt*100), "z4": round(wz["z4"]/tt*100),
+                "z5": round(wz["z5"]/tt*100),
+            })
+
+        return jsonify({
+            "zones":       result,
+            "weekly":      weekly,
+            "total_runs":  len(recent),
+            "total_hours": round(total_time/3600, 1),
+            "weeks":       weeks,
+        })
+    except Exception as e:
+        import traceback
+        return jsonify({"error": str(e), "traceback": traceback.format_exc()}), 500
+
+
+@app.route("/api/race/plan", methods=["GET","POST"])
+def api_race_plan():
+    """Race planner — store race and return training structure."""
+    if not _get_token("access_token"): return jsonify({"error":"not authenticated"}), 401
+    import json as _json
+    race_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "race.json")
+
+    if request.method == "POST":
+        data = request.get_json()
+        _json.dump(data, open(race_path,"w"), indent=2)
+        return jsonify({"ok": True})
+
+    try:
+        race = _json.load(open(race_path)) if os.path.exists(race_path) else None
+    except Exception:
+        race = None
+
+    if not race:
+        return jsonify({"race": None})
+
+    # Calculate weeks to race
+    race_date = datetime.strptime(race["date"], "%Y-%m-%d")
+    today     = datetime.now()
+    days_out  = (race_date - today).days
+    weeks_out = days_out // 7
+
+    # Build phase structure based on distance and time available
+    distance = race.get("distance", "5K")
+    dist_map = {"5K":3.1,"10K":6.2,"Half Marathon":13.1,"Marathon":26.2,"50K":31,"50M":50,"100K":62,"100M":100}
+    dist_miles = dist_map.get(distance, 6.2)
+
+    # Phase structure
+    if weeks_out <= 4:
+        phases = [{"name":"Taper","weeks":weeks_out,"focus":"Easy runs, stay sharp, trust your training"}]
+    elif dist_miles <= 6.2:
+        phases = [
+            {"name":"Build","weeks":max(1,weeks_out-2),"focus":"Speed work, tempo runs, increase mileage"},
+            {"name":"Taper","weeks":2,"focus":"Cut volume 40%, keep intensity, race-pace work"},
+        ]
+    elif dist_miles <= 13.1:
+        phases = [
+            {"name":"Base","weeks":max(1,weeks_out-6),"focus":"Easy mileage, aerobic base building"},
+            {"name":"Build","weeks":4,"focus":"Long runs, tempo, lactate threshold work"},
+            {"name":"Taper","weeks":2,"focus":"Cut volume 40%, keep intensity, race-day prep"},
+        ]
+    else:
+        phases = [
+            {"name":"Base","weeks":max(1,weeks_out-10),"focus":"Easy mileage, build to long run distance"},
+            {"name":"Build","weeks":6,"focus":"Peak long runs, back-to-back long efforts, fueling practice"},
+            {"name":"Taper","weeks":3,"focus":"Cut volume 50%, maintain frequency, trust the process"},
+        ]
+
+    # Fuel adjustment for race week
+    fuel_note = ""
+    if days_out <= 7:
+        fuel_note = "Race week: carb load 3 days out. 487g+ carbs/day. Reduce fiber. Race morning: familiar breakfast 2-3 hrs before."
+    elif days_out <= 14:
+        fuel_note = "Two weeks out: practice race-day nutrition on your long run this weekend."
+
+    return jsonify({
+        "race":       race,
+        "days_out":   days_out,
+        "weeks_out":  weeks_out,
+        "phases":     phases,
+        "dist_miles": dist_miles,
+        "fuel_note":  fuel_note,
+        "current_phase": next((p for p in reversed(phases) if p["weeks"] > 0), phases[-1]) if phases else None,
+    })
+
+
+@app.route("/api/version")
+def api_version():
+    """App version and build info."""
+    import sys
+    return jsonify({
+        "name":       APP_NAME,
+        "version":    APP_VERSION,
+        "built_by":   APP_BUILT_BY,
+        "year":       APP_YEAR,
+        "stack":      APP_STACK,
+        "python":     sys.version.split()[0],
+        "flask":      __import__('flask').__version__,
+    })
 
 @app.route("/api/debug/config")
 def api_debug_config():
@@ -1017,7 +1416,7 @@ def api_debug_config():
 
 @app.route("/api/performance")
 def api_performance():
-    if not session.get("access_token"): return jsonify({"error":"not authenticated"}), 401
+    if not _get_token("access_token"): return jsonify({"error":"not authenticated"}), 401
     try:
         cache_key = f"perf_{session.get('access_token', '')[:16]}"
         cached = cache_get(cache_key)
@@ -1244,7 +1643,7 @@ def api_ollama_models():
 @app.route("/api/insights")
 def api_insights():
     """Use local Ollama to analyze the athlete's recent training."""
-    if not session.get("access_token"): return jsonify({"error":"not authenticated"}), 401
+    if not _get_token("access_token"): return jsonify({"error":"not authenticated"}), 401
     try:
         model = "claude-haiku-4-5-20251001"
 
@@ -1276,7 +1675,7 @@ def api_insights():
             hr_str   = f"{avg_hr}bpm" if avg_hr else "n/a"
             wk_lines.append(f"  {wk}: {wd['runs']} runs, {round(wd['miles'],1)} mi, avg pace {pace_str}, avg HR {hr_str}")
 
-        athlete = session.get("athlete", {})
+        athlete = _json_mod.loads(_get_token("athlete", "{}") or "{}")
         name = athlete.get("firstname", "the athlete")
 
         prompt = f"""You are a knowledgeable running coach analyzing {name}'s training data from the last 12 weeks.
@@ -1340,38 +1739,58 @@ Be specific, data-driven, and encouraging. Use actual numbers from the data. Kee
 
 # ── Templates ─────────────────────────────────────────────────────────────────
 LOGIN_PAGE = """<!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<html lang="en"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#EFEEEA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D0E10" media="(prefers-color-scheme: dark)">
 <title>Stride</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Syne:wght@700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="/static/icons/icon-192.png">
+<link rel="shortcut icon" href="/static/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
+<link rel="stylesheet" href="/static/css/stride-glass.css">
+<script src="/static/js/stride-glass.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#111217;--surface:#181a20;--border:#2a2d36;--orange:#f5a623;--text:#d4d8e2;--muted:#5a5f72}
-body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center}
-.bg{position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.35}
-.card{position:relative;z-index:1;background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:44px 36px;width:340px;text-align:center}
-.logo{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:700;letter-spacing:.15em;color:var(--orange);margin-bottom:4px}
-.sub{font-size:.68rem;color:var(--muted);letter-spacing:.08em;margin-bottom:32px}
-.btn{display:flex;align-items:center;justify-content:center;gap:10px;background:#fc4c02;color:#fff;font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;padding:11px 22px;border-radius:2px;text-decoration:none;transition:opacity .15s}
-.btn:hover{opacity:.85}
-.note{margin-top:14px;font-size:.65rem;color:var(--muted);line-height:1.8}
-
-</style></head><body>
-<div class="bg"></div>
-<div class="card">
-  <div class="logo">STRIDE</div>
-  <div class="sub">// running analytics · local dashboard</div>
-  <a href="/login" class="btn">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+body.sg{min-height:100vh;min-height:100dvh;display:flex;align-items:center;justify-content:center;padding:24px;box-sizing:border-box}
+.login{width:min(400px,100%);padding:40px 32px 32px;border-radius:32px;gap:0;text-align:center;align-items:center}
+.login__mark{width:56px;height:56px;border-radius:18px;background:var(--accent-tint);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:20px}
+.login__title{font-size:2.5rem;font-weight:700;letter-spacing:-.03em;line-height:1;margin:0 0 10px}
+.login__lede{font-size:1rem;color:var(--sub);line-height:1.5;margin:0 0 6px}
+.login__sources{font-size:.875rem;color:var(--sub);margin:0 0 32px}
+.login__strava{width:100%;box-sizing:border-box;min-height:52px;border-radius:16px;background:#FC4C02;color:#fff;gap:10px}
+.login__strava:hover{background:#E34402}
+.login__note{font-size:.8125rem;color:var(--sub);line-height:1.6;margin:20px 0 0}
+</style>
+</head><body class="sg">
+<main class="sg-card login">
+  <div class="login__mark" aria-hidden="true">
+    <svg width="30" height="26" viewBox="3 7 21 18" fill="none">
+      <path d="M11 12h10M11 12v5h10v5H11M21 22h-10" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <line x1="6" y1="10" x2="9" y2="10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".6"/>
+      <line x1="5" y1="13.5" x2="8" y2="13.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".4"/>
+    </svg>
+  </div>
+  <h1 class="login__title">Stride</h1>
+  <p class="login__lede">Your running, fueling and training in one place.</p>
+  <p class="login__sources">Strava, Runna and Peloton</p>
+  <a href="/login" class="sg-btn login__strava">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
     Connect with Strava
   </a>
-  <p class="note">local only · no data stored · read-only access</p>
-</div></body></html>"""
+  <p class="login__note">Runs on your own server with read-only Strava access.</p>
+</main>
+</body></html>"""
+
+
 
 DASHBOARD_PAGE = """<!DOCTYPE html>
 <html lang="en"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#EFEEEA" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0D0E10" media="(prefers-color-scheme: dark)">
 <title>Stride — Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="/static/icons/icon-192.png">
+<link rel="apple-touch-icon" href="/static/icons/icon-192.png">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -1385,32 +1804,38 @@ DASHBOARD_PAGE = """<!DOCTYPE html>
   --text:#d4d8e2;--muted:#5a5f72;--muted2:#8b90a0;
   --mono:'JetBrains Mono',monospace;--sans:'Syne',sans-serif;
   --drawer-w:680px;
+  --radius:6px;--radius-sm:4px;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.18);
+  --shadow-md:0 8px 24px rgba(0,0,0,.3);
+  --ease:cubic-bezier(.4,0,.2,1);
 }
 html{font-size:13px}
 body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:1.5;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-10%;left:50%;transform:translateX(-50%);width:900px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(245,166,35,.05) 0%,transparent 70%);pointer-events:none;z-index:0}
 
 /* topbar */
-.topbar{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 14px;height:38px;position:sticky;top:0;z-index:200}
+.topbar{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 14px;height:38px;position:sticky;top:0;z-index:200;box-shadow:0 1px 0 rgba(0,0,0,.3)}
 .logo{font-family:var(--sans);font-size:.95rem;font-weight:700;letter-spacing:.12em;color:var(--orange)}
 .bread{display:flex;align-items:center;gap:8px;font-size:.7rem;color:var(--muted);margin-left:12px}
 .bread span{color:var(--muted2)}
 .topbar-l{display:flex;align-items:center}
 .topbar-r{display:flex;align-items:center;gap:10px}
 .athl{font-size:.72rem;color:var(--muted2)}
-.logout{font-size:.68rem;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:2px 8px;border-radius:2px}
+.logout{font-size:.68rem;color:var(--muted);text-decoration:none;border:1px solid var(--border2);padding:3px 10px;border-radius:var(--radius-sm);transition:color .15s var(--ease),border-color .15s var(--ease)}
 .logout:hover{color:var(--orange);border-color:var(--orange)}
 
 /* tabs */
-.tabs{display:flex;align-items:center;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 14px;height:34px;gap:0;position:sticky;top:38px;z-index:190}
-.tab{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 14px;height:34px;display:flex;align-items:center;cursor:pointer;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;white-space:nowrap}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+.tabs{display:flex;align-items:center;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 14px;height:34px;gap:2px;position:sticky;top:38px;z-index:190}
+.tab{font-size:.7rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 14px;height:34px;display:flex;align-items:center;cursor:pointer;border-bottom:2px solid transparent;border-radius:var(--radius-sm) var(--radius-sm) 0 0;transition:color .15s var(--ease),border-color .15s var(--ease),background .15s var(--ease);white-space:nowrap}
+.tab:hover{color:var(--text);background:rgba(255,255,255,.03)}
+.tab.active{color:var(--orange);border-bottom-color:var(--orange);background:rgba(245,166,35,.06)}
 
 /* page */
 .tab-page{display:none;padding:10px 12px 60px}
-.tab-page.active{display:block}
+.tab-page.active{display:block;animation:fadein .25s var(--ease) both}
+@keyframes fadein{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
 .tab-page.drawer-open{margin-right:var(--drawer-w)}
-.row{display:grid;gap:6px;margin-bottom:6px}
+.row{display:grid;gap:8px;margin-bottom:8px}
 .c5{grid-template-columns:repeat(5,1fr)}
 .c4{grid-template-columns:repeat(4,1fr)}
 .c3{grid-template-columns:1fr 1fr 1fr}
@@ -1420,30 +1845,33 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
 .cs3{grid-column:span 3}
 
 /* panels */
-.panel{background:var(--surface);border:1px solid var(--border);border-radius:2px;overflow:hidden}
-.ph{display:flex;align-items:center;justify-content:space-between;padding:5px 10px;border-bottom:1px solid var(--border);background:var(--bg2)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-sm);transition:border-color .2s var(--ease),transform .2s var(--ease),box-shadow .2s var(--ease)}
+.ph{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;border-bottom:1px solid var(--border);background:var(--bg2)}
 .pt{font-size:.68rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted2)}
 .ptag{font-size:.62rem;color:var(--muted)}
-.pb{padding:8px 10px}
+.pb{padding:10px 12px}
 
 /* stat tiles */
-.tile{padding:11px 13px}
-.tlabel{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
-.tval{font-family:var(--sans);font-size:1.75rem;font-weight:700;line-height:1;margin-bottom:2px}
+.tile{padding:13px 15px}
+.tlabel{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.tval{font-family:var(--sans);font-size:1.85rem;font-weight:700;line-height:1;margin-bottom:3px;letter-spacing:-.01em}
 .tval.sm{font-size:1.2rem}
 .tval.or{color:var(--orange)}.tval.gr{color:var(--green)}.tval.bl{color:var(--blue)}.tval.rd{color:var(--red)}.tval.pu{color:var(--purple)}
 .tsub{font-size:.65rem;color:var(--muted)}
-.tdelta{font-size:.68rem;margin-top:3px}
+.tdelta{font-size:.68rem;margin-top:4px;display:inline-flex;align-items:center;gap:3px}
 .tdelta.up{color:var(--green)}.tdelta.dn{color:var(--red)}.tdelta.neu{color:var(--muted)}
+.tdelta.up::before{content:'▲';font-size:.6em}
+.tdelta.dn::before{content:'▼';font-size:.6em}
 
 /* charts */
 .cw{position:relative;width:100%}.h90{height:90px}.h110{height:110px}.h150{height:150px}.h180{height:180px}.h200{height:200px}.h220{height:220px}
 
 /* tables */
 .dt{width:100%;border-collapse:collapse;font-size:.73rem}
-.dt th{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:5px 10px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg2);font-weight:500}
-.dt td{padding:5px 10px;border-bottom:1px solid var(--border)}
+.dt th{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:7px 12px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg2);font-weight:500}
+.dt td{padding:7px 12px;border-bottom:1px solid var(--border);transition:background .12s var(--ease)}
 .dt tr:last-child td{border-bottom:none}
+.dt tr:nth-child(even) td{background:rgba(255,255,255,.012)}
 .dt tr.clickable{cursor:pointer}
 .dt tr.clickable:hover td{background:var(--surface2);color:var(--orange)}
 .tn{color:var(--muted2);font-variant-numeric:tabular-nums}
@@ -1458,9 +1886,9 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
 
 /* PRs */
 .pr-grid{display:grid;grid-template-columns:repeat(4,1fr)}
-.pr-item{padding:10px 12px;border-right:1px solid var(--border);cursor:pointer;transition:background .15s}
+.pr-item{padding:12px 14px;border-right:1px solid var(--border);cursor:pointer;transition:background .15s var(--ease),transform .15s var(--ease)}
 .pr-item:last-child{border-right:none}
-.pr-item:hover{background:var(--surface2)}
+.pr-item:hover{background:var(--surface2);transform:translateY(-1px)}
 .pr-type{font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:4px}
 .pr-val{font-family:var(--sans);font-size:1.25rem;font-weight:700;color:var(--orange);line-height:1}
 .pr-det{font-size:.63rem;color:var(--muted);margin-top:3px}
@@ -1468,7 +1896,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
 /* heatmap */
 .heatmap-wrap{padding:8px 10px;overflow-x:auto}
 .heatmap-grid{display:grid;grid-template-rows:repeat(7,10px);grid-auto-flow:column;gap:2px;width:max-content}
-.hm-cell{width:10px;height:10px;border-radius:1px;cursor:default}
+.hm-cell{width:10px;height:10px;border-radius:2px;cursor:default;transition:transform .1s var(--ease)}
+.hm-cell:hover{transform:scale(1.3)}
 .hm-0{background:#1a1c22}
 .hm-1{background:rgba(115,191,105,.3)}
 .hm-2{background:rgba(115,191,105,.55)}
@@ -1480,12 +1909,12 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
 .insights-box{padding:14px 16px;font-size:.78rem;line-height:1.9;color:var(--text)}
 .insights-box strong{color:var(--orange);font-weight:600}
 .insights-loading{display:flex;align-items:center;gap:10px;padding:20px;color:var(--muted);font-size:.75rem}
-.insight-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--muted2);font-family:var(--mono);font-size:.7rem;padding:5px 14px;cursor:pointer;border-radius:2px;transition:all .15s}
+.insight-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--muted2);font-family:var(--mono);font-size:.7rem;padding:5px 14px;cursor:pointer;border-radius:var(--radius-sm);transition:all .15s var(--ease)}
 .insight-btn:hover{color:var(--orange);border-color:var(--orange)}
 .insight-btn:disabled{opacity:.4;cursor:default}
 
 /* fitness status badge */
-.status-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:2px;font-size:.68rem;font-weight:600;margin-bottom:8px}
+.status-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:var(--radius-sm);font-size:.68rem;font-weight:600;margin-bottom:8px}
 
 /* drawer */
 .drawer{position:fixed;top:0;right:0;bottom:0;width:var(--drawer-w);background:var(--surface);border-left:1px solid var(--border2);z-index:300;overflow-y:auto;transform:translateX(100%);transition:transform .3s ease}
@@ -1536,27 +1965,51 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
 .info-section-head{font-family:var(--sans);font-size:1rem;font-weight:700;color:var(--text);margin:18px 0 10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
 .info-section-head:first-child{margin-top:0}
 
+/* ── Bottom nav (mobile only) ── */
+.bottom-nav{display:none}
+
 /* ── Mobile responsive ── */
 @media(max-width:768px){
-  :root{--drawer-w:100vw}
+  :root{--drawer-w:100vw;--bottom-nav-h:58px}
   html{font-size:12px}
 
   .bread{display:none}
   .topbar-r .athl{display:none}
-  .logout{font-size:.65rem;padding:2px 6px}
+  .logout{font-size:.68rem;padding:6px 10px;min-height:32px;display:inline-flex;align-items:center}
 
-  .tabs{gap:0;padding:0 8px;overflow-x:auto}
-  .tab{font-size:.65rem;padding:0 10px;white-space:nowrap}
+  /* top tab strip is replaced by the bottom nav on mobile */
+  .tabs{display:none}
+  .bottom-nav{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:250;
+    height:var(--bottom-nav-h);
+    padding-bottom:env(safe-area-inset-bottom,0);
+    background:var(--bg2);border-top:1px solid var(--border);
+    box-shadow:0 -4px 16px rgba(0,0,0,.25);
+  }
+  .bottom-nav .tab{
+    flex:1;min-width:0;height:100%;padding:0;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    font-size:.56rem;letter-spacing:.02em;text-transform:none;
+    color:var(--muted);border-bottom:none;
+  }
+  .bottom-nav .tab svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .bottom-nav .tab span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:56px}
+  .bottom-nav .tab.active{color:var(--orange)}
 
-  .tab-page{padding:8px 8px 60px}
+  .tab-page{padding:8px 8px calc(var(--bottom-nav-h) + 16px)}
 
-  .row.c5,.row.c4{grid-template-columns:1fr 1fr}
+  .row.c5,.row.c4{
+    display:flex;overflow-x:auto;gap:8px;scroll-snap-type:x proximity;
+    -webkit-overflow-scrolling:touch;padding-bottom:2px;
+  }
+  .row.c5>.panel,.row.c4>.panel{flex:0 0 42vw;scroll-snap-align:start}
   .row.c3,.row.c2,.row.c31{grid-template-columns:1fr}
   .cs2,.cs3{grid-column:span 1}
 
   .info-grid{grid-template-columns:1fr}
 
   .pr-grid{grid-template-columns:1fr 1fr}
+  .pr-item{padding:12px}
   .pr-item:nth-child(2n){border-right:none}
   .pr-item:nth-child(n+3){border-top:1px solid var(--border)}
 
@@ -1564,26 +2017,34 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
   .training-block{grid-template-columns:1fr}
   .stream-charts{grid-template-columns:1fr}
 
-  .dt th,.dt td{padding:4px 8px;font-size:.68rem}
-  .dt th:nth-child(n+5),.dt td:nth-child(n+5){display:none}
+  .dt{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap}
+  .dt th,.dt td{padding:8px 10px;font-size:.7rem}
 
   .panel{border-radius:2px}
-  .tile{padding:10px 12px}
-  .tval{font-size:1.4rem}
+  .tile{padding:12px 13px}
+  .tval{font-size:1.5rem}
 
-  .h110,.h150,.h180,.h200,.h220{height:140px}
+  .h110,.h150,.h180,.h200,.h220{height:150px}
 
   .heatmap-wrap{padding:6px 4px}
   .hm-cell{width:9px;height:9px}
   .heatmap-grid{gap:1px}
 
-  .drawer{top:38px}
-  .drawer-topbar{height:38px}
+  .drawer{top:0}
+  .drawer-topbar{height:48px}
+  .drawer-close{padding:8px 14px;min-height:38px}
   #runMap{height:200px}
+
+  /* touch targets */
+  .insight-btn{padding:8px 16px;min-height:36px}
+  .meals-day-tab{padding:8px 14px;min-height:36px}
+  .fuel-cell{min-width:68px;padding:9px 6px}
+  .meals-select{padding:8px 10px;min-height:36px}
+  button,.btn,a.strava-link{min-height:36px}
 }
 
 @media(max-width:480px){
-  .row.c5,.row.c4{grid-template-columns:1fr 1fr}
+  .row.c5>.panel,.row.c4>.panel{flex-basis:62vw}
   .topbar{padding:0 10px}
   .logo{font-size:.85rem}
 }
@@ -1678,7 +2139,72 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
 .mds-item{display:flex;flex-direction:column;align-items:center}
 .mds-val{font-size:.9rem;font-weight:600;font-family:var(--sans)}
 .mds-label{font-size:.55rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:1px}
-</style></head><body>
+
+.analytics-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+@media(max-width:700px){.analytics-grid{grid-template-columns:1fr}}
+.zone-donut-wrap{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.zone-legend{display:flex;flex-direction:column;gap:5px;flex:1;min-width:140px}
+.zone-legend-item{display:flex;align-items:center;gap:6px;font-size:.7rem}
+.zone-bar-full{height:10px;border-radius:2px;background:var(--border);overflow:hidden;margin-bottom:2px}
+.zone-bar-fill{height:100%;border-radius:2px;transition:width .4s}
+.shoe-card{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:10px 12px;margin-bottom:8px}
+.shoe-card.warning{border-color:var(--yellow)}
+.shoe-card.replace{border-color:var(--red)}
+.shoe-progress{height:6px;border-radius:3px;background:var(--border);overflow:hidden;margin:6px 0}
+.shoe-progress-fill{height:100%;border-radius:3px;transition:width .4s}
+.race-phase{background:var(--surface);border:1px solid var(--border);border-radius:3px;padding:10px 12px;margin-bottom:6px}
+.race-phase.current{border-color:var(--orange)}
+.race-phase-name{font-family:var(--sans);font-size:.85rem;font-weight:700;margin-bottom:2px}
+.race-phase-focus{font-size:.7rem;color:var(--muted2);line-height:1.6}
+.weight-chart-wrap{padding:10px 12px}
+.summary-stat{background:var(--surface2);border:1px solid var(--border);border-radius:2px;padding:8px 12px;text-align:center}
+.summary-stat-val{font-family:var(--sans);font-size:1.4rem;font-weight:700}
+.summary-stat-label{font-family:var(--mono);font-size:.58rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-top:2px}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+@media(max-width:600px){.summary-grid{grid-template-columns:repeat(2,1fr)}}
+</style>
+<link rel="stylesheet" href="/static/css/stride-glass.css">
+<link rel="stylesheet" href="/static/css/stride-legacy.css">
+<script src="/static/js/stride-glass.js"></script>
+</head><body class="sg">
+
+<!-- ══════════ Stride Glass shell (old .topbar/.tabs/.bottom-nav stay below, hidden, for dashboard.js) ══════════ -->
+<header class="sg-bar">
+  <span class="sg-bar__brand">Stride</span>
+  <div class="sg-bar__heading">
+    <div class="sg-bar__date" id="sgDate"></div>
+    <h1 class="sg-bar__title" id="sgTitle">Overview</h1>
+  </div>
+  <div class="sg-bar__actions" style="display:flex;gap:8px">
+    <button class="sg-icon-btn" type="button" data-sg-go="info" aria-label="Guide">?</button>
+    <button class="sg-icon-btn" type="button" data-sg-open="sgSettings" aria-label="Settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+    </button>
+  </div>
+</header>
+
+<nav class="sg-nav sg-glass" aria-label="Main">
+  <button class="sg-tab" type="button" data-group="overview" aria-current="page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>
+    <span>Overview</span>
+  </button>
+  <button class="sg-tab" type="button" data-group="train">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>
+    <span>Train</span>
+  </button>
+  <button class="sg-tab" type="button" data-group="fuel">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c3 4 6 6.5 6 11a6 6 0 0 1-12 0c0-3 1.5-5 3-6.5.5 2 1.5 3 3 3.5 0-3-1-5.5 0-8z"/></svg>
+    <span>Fuel</span>
+  </button>
+  <button class="sg-tab" type="button" data-group="stats">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 20V11"/><path d="M12 20V5"/><path d="M19 20v-6"/></svg>
+    <span>Stats</span>
+  </button>
+</nav>
+
+<div class="sg-subnav" id="sgSubnav" hidden>
+  <div class="sg-seg sg-glass" id="sgSeg" role="group" aria-label="Section"></div>
+</div>
 
 <div class="topbar">
   <div class="topbar-l">
@@ -1688,6 +2214,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
   <div class="topbar-r">
     <span class="athl" id="topAthl"></span>
     <button class="logout" onclick="refreshData()" id="refreshBtn">↺ refresh</button>
+    <button onclick="toggleVersionPanel()" title="App info" style="background:none;border:1px solid var(--border2);color:var(--muted);font-family:var(--mono);font-size:.65rem;padding:3px 9px;cursor:pointer;border-radius:2px;transition:color .15s,border-color .15s;line-height:1" onmouseover="this.style.color='var(--orange)';this.style.borderColor='var(--orange)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border2)'">v<span id="topbarVersion" style="color:var(--orange)">—</span></button>
     <a href="/logout" class="logout">sign out</a>
   </div>
 </div>
@@ -1699,7 +2226,40 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
   <div class="tab" data-tab="fuel" onclick="switchTab('fuel')">Fuel</div>
   <div class="tab" data-tab="train" onclick="switchTab('train')">Train</div>
   <div class="tab" data-tab="meals" onclick="switchTab('meals')">Meals</div>
+  <div class="tab" data-tab="analytics" onclick="switchTab('analytics')">Analytics</div>
 </div>
+
+<!-- mobile bottom nav — mirrors .tabs, hooks into the same switchTab() -->
+<nav class="bottom-nav">
+  <div class="tab active" data-tab="overview" onclick="switchTab('overview')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    <span>Overview</span>
+  </div>
+  <div class="tab" data-tab="performance" onclick="switchTab('performance')">
+    <svg viewBox="0 0 24 24"><polyline points="3 17 9 11 13 15 21 6"/><polyline points="15 6 21 6 21 12"/></svg>
+    <span>Perf</span>
+  </div>
+  <div class="tab" data-tab="fuel" onclick="switchTab('fuel')">
+    <svg viewBox="0 0 24 24"><path d="M12 2c2 3-1 4-1 7a3 3 0 0 0 6 0c0-2-1-3-1-5 3 2 4 6 4 9a8 8 0 0 1-16 0c0-4 2-7 5-11 1 3 2 4 3 0z"/></svg>
+    <span>Fuel</span>
+  </div>
+  <div class="tab" data-tab="train" onclick="switchTab('train')">
+    <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="1.5"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="16" y1="2" x2="16" y2="6"/></svg>
+    <span>Train</span>
+  </div>
+  <div class="tab" data-tab="meals" onclick="switchTab('meals')">
+    <svg viewBox="0 0 24 24"><path d="M6 2v8a2 2 0 0 0 4 0V2"/><path d="M8 10v12"/><path d="M17 2c-1.5 0-3 1.5-3 4s1.5 4 3 4v10"/></svg>
+    <span>Meals</span>
+  </div>
+  <div class="tab" data-tab="analytics" onclick="switchTab('analytics')">
+    <svg viewBox="0 0 24 24"><line x1="5" y1="21" x2="5" y2="11"/><line x1="12" y1="21" x2="12" y2="5"/><line x1="19" y1="21" x2="19" y2="14"/></svg>
+    <span>Stats</span>
+  </div>
+  <div class="tab" data-tab="info" onclick="switchTab('info')">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><line x1="12" y1="10.5" x2="12" y2="16"/><circle cx="12" cy="7.5" r="0.6" fill="currentColor" stroke="none"/></svg>
+    <span>Guide</span>
+  </div>
+</nav>
 
 <div class="loading" id="loading">
   <div class="spin"></div>
@@ -1710,6 +2270,26 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
 
 <!-- ══════════════════════════ OVERVIEW TAB ══════════════════════════ -->
 <div class="tab-page active" id="tab-overview">
+
+  <section class="sg-card sg-card--hero sg-today" id="sgToday">
+    <div class="sg-card__head">
+      <span class="sg-label">Today</span>
+      <span class="sg-pill" id="sgTodayType">Loading</span>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:16px">
+      <div style="display:flex;flex-direction:column;gap:6px;max-width:560px">
+        <h2 class="sg-hero__workout" id="sgTodayTitle">&nbsp;</h2>
+        <p class="sg-hero__detail" id="sgTodayDetail"></p>
+      </div>
+      <a class="sg-btn" href="#" data-sg-go="train">See this week</a>
+    </div>
+    <div class="sg-today__macros">
+      <div class="sg-inset"><span class="sg-label">Calories</span><span class="sg-value sg-accent" id="sgTodayCal">—</span><span class="sg-label">kcal target</span></div>
+      <div class="sg-inset"><span class="sg-label">Carbs</span><span class="sg-value" id="sgTodayCarbs">—</span><span class="sg-label">g target</span></div>
+      <div class="sg-inset"><span class="sg-label">Protein</span><span class="sg-value" id="sgTodayProtein">—</span><span class="sg-label">g target</span></div>
+      <div class="sg-inset"><span class="sg-label">Fat</span><span class="sg-value" id="sgTodayFat">—</span><span class="sg-label">g target</span></div>
+    </div>
+  </section>
 
   <div class="row c5">
     <div class="panel"><div class="tile"><div class="tlabel">This Week</div><div class="tval bl" id="s-wk-mi">—</div><div class="tsub" id="s-wk-sub">—</div></div></div>
@@ -2010,7 +2590,7 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
             <span id="fuelGCStatus"></span>
             <span style="font-size:.68rem;color:var(--muted)">Weight: <span id="fuelWeight">—</span></span>
             <div style="display:flex;gap:4px;align-items:center">
-              <input id="fuelWeightInput" type="number" placeholder="lbs"
+              <input id="fuelWeightInput" type="number" inputmode="decimal" placeholder="lbs"
                 style="width:64px;background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.68rem;padding:2px 6px;border-radius:2px"
                 onkeydown="if(event.key==='Enter')updateWeight()">
               <button class="insight-btn" onclick="updateWeight()">set</button>
@@ -2138,6 +2718,97 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
 
   </div>
 </div><!-- /meals tab -->
+<!-- ══════════════════════════ ANALYTICS TAB ══════════════════════════ -->
+<div class="tab-page" id="tab-analytics">
+
+  <div class="perf-loading" id="analyticsLoading">
+    <div class="spin"></div>
+    <div class="lmsg">loading analytics...</div>
+  </div>
+
+  <div id="analyticsContent" style="display:none">
+
+    <!-- Weekly Summary -->
+    <div class="panel" style="margin-bottom:10px">
+      <div class="ph"><span class="pt">Weekly Digest</span><span id="summaryWeekLabel" class="ptag"></span></div>
+      <div style="padding:10px 12px">
+        <div class="summary-grid" id="summaryStats"></div>
+        <div id="summaryNote" style="font-size:.7rem;color:var(--muted2);line-height:1.7;padding:8px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:2px;display:none"></div>
+      </div>
+    </div>
+
+    <div class="analytics-grid">
+
+      <!-- HR Zone Distribution -->
+      <div class="panel">
+        <div class="ph">
+          <span class="pt">HR Zone Distribution</span>
+          <select id="zoneWeeksSelect" class="meals-select" onchange="loadZones()" style="font-size:.6rem;padding:2px 6px">
+            <option value="4">Last 4 weeks</option>
+            <option value="8">Last 8 weeks</option>
+            <option value="12">Last 12 weeks</option>
+          </select>
+        </div>
+        <div style="padding:10px 12px" id="zoneContent">
+          <div style="color:var(--muted);font-size:.7rem">Loading...</div>
+        </div>
+      </div>
+
+      <!-- Weight Trend -->
+      <div class="panel">
+        <div class="ph">
+          <span class="pt">Weight Trend</span>
+          <div style="display:flex;gap:6px;align-items:center">
+            <input id="weightLogInput" type="number" inputmode="decimal" placeholder="lbs" style="width:60px;background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.65rem;padding:2px 5px;border-radius:2px" onkeydown="if(event.key==='Enter')logWeight()">
+            <button class="insight-btn" onclick="logWeight()">log</button>
+          </div>
+        </div>
+        <div class="weight-chart-wrap">
+          <canvas id="weightChart" height="140"></canvas>
+          <div id="weightEmpty" style="color:var(--muted);font-size:.7rem;text-align:center;padding:20px 0;display:none">No weight entries yet — log your first weigh-in above.</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="analytics-grid">
+
+      <!-- Race Planner -->
+      <div class="panel">
+        <div class="ph"><span class="pt">Race Planner</span></div>
+        <div style="padding:10px 12px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            <input id="raceNameInput" type="text" placeholder="Race name" style="flex:1;min-width:120px;background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.65rem;padding:3px 7px;border-radius:2px">
+            <input id="raceDateInput" type="date" style="background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.65rem;padding:3px 7px;border-radius:2px">
+            <select id="raceDistSelect" class="meals-select">
+              <option>5K</option><option>10K</option><option>Half Marathon</option>
+              <option>Marathon</option><option>50K</option><option>50M</option><option>100K</option><option>100M</option>
+            </select>
+            <button class="insight-btn" onclick="saveRace()">Set race</button>
+          </div>
+          <div id="racePlanContent"></div>
+        </div>
+      </div>
+
+      <!-- Shoe Tracker -->
+      <div class="panel">
+        <div class="ph"><span class="pt">Shoe Tracker</span></div>
+        <div style="padding:10px 12px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+            <input id="shoeNameInput" type="text" placeholder="Shoe name/model" style="flex:1;min-width:120px;background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.65rem;padding:3px 7px;border-radius:2px">
+            <input id="shoeStartMiles" type="number" placeholder="Starting mi" style="width:80px;background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.65rem;padding:3px 7px;border-radius:2px" value="0">
+            <input id="shoeAlertMiles" type="number" placeholder="Alert at mi" style="width:80px;background:var(--bg2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:.65rem;padding:3px 7px;border-radius:2px" value="400">
+            <button class="insight-btn" onclick="addShoe()">Add</button>
+          </div>
+          <div id="shoeList"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</div><!-- /analytics tab -->
+
 
 
 
@@ -2155,6 +2826,40 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);line-height:
 </div>
 
 <script src="/static/dashboard.js"></script>
+<script src="/static/js/stride-shell.js"></script>
+
+<!-- Version panel -->
+<div id="versionPanel" style="display:none;position:fixed;top:calc(var(--topbar-h) + 6px);right:12px;z-index:500;width:280px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);box-shadow:0 8px 32px rgba(0,0,0,.4);animation:fadeIn .15s ease">
+  <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+    <span style="font-family:var(--sans);font-size:.88rem;font-weight:700;color:var(--orange)">Stride</span>
+    <button onclick="toggleVersionPanel()" style="background:none;border:none;color:var(--muted);font-size:.9rem;cursor:pointer;padding:0 2px">✕</button>
+  </div>
+  <div id="versionPanelBody" style="padding:12px 14px;font-family:var(--mono);font-size:.65rem;line-height:2.2;color:var(--muted2)">
+    Loading...
+  </div>
+</div>
+<div id="versionOverlay" onclick="toggleVersionPanel()" style="display:none;position:fixed;inset:0;z-index:499"></div>
+
+<dialog class="sg-sheet sg-glass" id="sgSettings" aria-label="Settings">
+  <h2 class="sg-card__title" style="margin-bottom:16px">Settings</h2>
+  <label class="sg-label" for="sgGlassRange">Glass effect</label>
+  <div style="display:flex;align-items:center;gap:12px;margin:6px 0 20px">
+    <input class="sg-range" id="sgGlassRange" type="range" min="0" max="100" step="5" data-sg-glass>
+    <output for="sgGlassRange" class="sg-num" style="min-width:4ch;text-align:right"></output>
+  </div>
+  <label class="sg-label" for="sgTheme">Appearance</label>
+  <select id="sgTheme" data-sg-theme style="display:block;width:100%;min-height:44px;margin:6px 0 24px;border-radius:12px;border:1px solid var(--hairline);background:var(--card);color:var(--text);font:inherit;padding:0 12px">
+    <option value="system">Match system</option>
+    <option value="light">Light</option>
+    <option value="dark">Dark</option>
+  </select>
+  <div class="sg-sheet__actions">
+    <button class="sg-btn sg-btn--quiet" type="button" data-sg-close onclick="refreshData()">Refresh data</button>
+    <button class="sg-btn sg-btn--quiet" type="button" data-sg-close onclick="toggleVersionPanel()">App info · v<span id="sgVersion">—</span></button>
+    <a class="sg-btn sg-btn--quiet" href="/logout">Sign out</a>
+  </div>
+  <button class="sg-btn" type="button" data-sg-close style="width:100%">Done</button>
+</dialog>
 </body></html>"""
 
 

@@ -1,0 +1,2290 @@
+{
+  "plans": {
+    "standard_7day": {
+      "label": "Standard High-Protein (7-Day Periodized)",
+      "description": "Macros match your Stride fuel day type. Meals rotate based on training load.",
+      "type": "periodized",
+      "days": {
+        "rest": {
+          "label": "Rest Day",
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "4-Egg Scramble + Cottage Cheese",
+              "cal": 450,
+              "protein": 48,
+              "carbs": 25,
+              "fat": 18,
+              "desc": "4 whole eggs scrambled in 1 tsp olive oil with spinach, cherry tomatoes, and diced onion. 1 cup cottage cheese on the side. Black coffee.",
+              "tags": [
+                "high protein",
+                "15 min"
+              ]
+            },
+            {
+              "type": "Lunch",
+              "name": "Ground Turkey Power Bowl",
+              "cal": 455,
+              "protein": 52,
+              "carbs": 30,
+              "fat": 14,
+              "desc": "6 oz 98/2 ground turkey seasoned with taco spice, over 1 cup roasted cauliflower rice and mixed greens. Salsa and Greek yogurt instead of sour cream.",
+              "tags": [
+                "high protein",
+                "batch-friendly"
+              ]
+            },
+            {
+              "type": "Dinner",
+              "name": "Roasted Chicken Thighs + Sweet Potato",
+              "cal": 580,
+              "protein": 55,
+              "carbs": 45,
+              "fat": 20,
+              "desc": "2 bone-in chicken thighs (skin removed) roasted with garlic and herbs. 1 medium sweet potato roasted with cinnamon. Roasted broccoli on the side.",
+              "tags": [
+                "sweet potato",
+                "high protein"
+              ]
+            },
+            {
+              "type": "Snack",
+              "name": "Greek Yogurt + Berries",
+              "cal": 280,
+              "protein": 32,
+              "carbs": 20,
+              "fat": 8,
+              "desc": "1.5 cups 0% plain Greek yogurt with 1/2 cup mixed berries. Optional: 1 scoop unflavored collagen stirred in for an extra protein hit.",
+              "tags": [
+                "no cook",
+                "protein anchor"
+              ]
+            }
+          ]
+        },
+        "easy": {
+          "label": "Easy Run",
+          "meals": [
+            {
+              "type": "Breakfast / Pre-Run",
+              "name": "Oatmeal + Protein + Banana",
+              "cal": 460,
+              "protein": 38,
+              "carbs": 55,
+              "fat": 10,
+              "desc": "3/4 cup rolled oats cooked, 1 scoop vanilla protein powder stirred in, 1 banana sliced on top. Eat 60-90 min before your run.",
+              "tags": [
+                "pre-run carbs",
+                "10 min"
+              ]
+            },
+            {
+              "type": "Post-Run Recovery",
+              "name": "Protein Shake + Rice Cakes",
+              "cal": 440,
+              "protein": 52,
+              "carbs": 40,
+              "fat": 8,
+              "desc": "2-scoop protein shake with water or skim milk. 3 plain rice cakes with a drizzle of honey. Hit this within 45 min of finishing.",
+              "tags": [
+                "no cook",
+                "recovery window"
+              ]
+            },
+            {
+              "type": "Lunch",
+              "name": "Chicken + Roasted Potato Bowl",
+              "cal": 580,
+              "protein": 50,
+              "carbs": 55,
+              "fat": 18,
+              "desc": "6 oz grilled chicken breast, 1.5 cups diced roasted Yukon Gold potatoes with garlic and rosemary, roasted zucchini. Drizzle of olive oil.",
+              "tags": [
+                "Yukon Gold",
+                "high protein",
+                "batch-friendly"
+              ]
+            },
+            {
+              "type": "Dinner",
+              "name": "Salmon + Roasted Sweet Potato Wedges",
+              "cal": 610,
+              "protein": 48,
+              "carbs": 55,
+              "fat": 22,
+              "desc": "6 oz salmon fillet baked with lemon and dill. Sweet potato cut into wedges and roasted at 425\u00b0F until crispy. Steamed green beans.",
+              "tags": [
+                "sweet potato",
+                "omega-3s"
+              ]
+            }
+          ]
+        },
+        "moderate": {
+          "label": "Moderate Run / Strength",
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Protein Pancakes + Egg Whites",
+              "cal": 590,
+              "protein": 45,
+              "carbs": 70,
+              "fat": 14,
+              "desc": "3 protein pancakes made with protein powder, oat flour, and egg. Side of 6 egg whites scrambled. Drizzle of maple syrup (2 tsp).",
+              "tags": [
+                "pre-workout carbs",
+                "high protein"
+              ]
+            },
+            {
+              "type": "Lunch",
+              "name": "Turkey + Mashed Potato Bowl",
+              "cal": 650,
+              "protein": 52,
+              "carbs": 75,
+              "fat": 16,
+              "desc": "6 oz 98/2 ground turkey saut\u00e9ed with onion and peppers. 1.5 cups mashed Russet potatoes made with chicken broth. Roasted asparagus.",
+              "tags": [
+                "Russet mash",
+                "high protein",
+                "Instant Pot"
+              ]
+            },
+            {
+              "type": "Dinner",
+              "name": "Beef Stir-Fry + Jasmine Rice",
+              "cal": 720,
+              "protein": 55,
+              "carbs": 80,
+              "fat": 20,
+              "desc": "5 oz lean beef sirloin sliced thin, stir-fried with broccoli, snap peas, and bell pepper in low-sodium soy sauce + garlic. 1.5 cups cooked jasmine rice.",
+              "tags": [
+                "rice cooker",
+                "high protein"
+              ]
+            },
+            {
+              "type": "Post-Workout",
+              "name": "Chocolate Milk + Protein",
+              "cal": 415,
+              "protein": 40,
+              "carbs": 55,
+              "fat": 5,
+              "desc": "16 oz low-fat chocolate milk + 1 scoop whey protein. Hit this within 30 min of finishing your workout.",
+              "tags": [
+                "recovery window",
+                "fast carbs"
+              ]
+            }
+          ]
+        },
+        "hard": {
+          "label": "Hard / Tempo / Intervals",
+          "meals": [
+            {
+              "type": "Breakfast (Pre-Workout)",
+              "name": "White Rice Bowl + Eggs + Banana",
+              "cal": 700,
+              "protein": 45,
+              "carbs": 100,
+              "fat": 12,
+              "desc": "1.5 cups cooked white rice, 3 whole eggs scrambled on top, 1 banana on the side. Eat 2 hrs before a hard effort.",
+              "tags": [
+                "pre-workout fuel",
+                "rice cooker"
+              ]
+            },
+            {
+              "type": "Post-Workout Recovery",
+              "name": "Chocolate Milk + Protein + Rice Cakes",
+              "cal": 640,
+              "protein": 52,
+              "carbs": 90,
+              "fat": 8,
+              "desc": "16 oz chocolate milk, 1.5 scoop whey protein, 4 rice cakes with honey. Hit this within 20-30 min of finishing.",
+              "tags": [
+                "recovery window",
+                "fast carbs",
+                "fast protein"
+              ]
+            },
+            {
+              "type": "Lunch",
+              "name": "Loaded Baked Potato + Chicken",
+              "cal": 780,
+              "protein": 55,
+              "carbs": 95,
+              "fat": 20,
+              "desc": "1 large Russet potato topped with 6 oz shredded chicken breast, salsa, and Greek yogurt. Hearty and loaded with carbs and protein.",
+              "tags": [
+                "Russet potato",
+                "high protein"
+              ]
+            },
+            {
+              "type": "Dinner",
+              "name": "Pasta + Ground Turkey Marinara",
+              "cal": 740,
+              "protein": 50,
+              "carbs": 90,
+              "fat": 20,
+              "desc": "2 cups cooked penne pasta with 5 oz 98/2 ground turkey in marinara sauce. Roasted zucchini and mushrooms mixed in. Light parmesan finish.",
+              "tags": [
+                "carb load",
+                "high protein",
+                "Instant Pot"
+              ]
+            }
+          ]
+        },
+        "long": {
+          "label": "Long Run",
+          "meals": [
+            {
+              "type": "Pre-Run Breakfast",
+              "name": "Oatmeal + Banana + Protein + Toast",
+              "cal": 600,
+              "protein": 35,
+              "carbs": 90,
+              "fat": 10,
+              "desc": "3/4 cup oats cooked, 1 scoop protein stirred in, 1 banana sliced. 1 piece white toast with a thin smear of almond butter. Eat 2-2.5 hrs before.",
+              "tags": [
+                "pre-run load",
+                "10 min"
+              ]
+            },
+            {
+              "type": "Post-Run Recovery",
+              "name": "Chocolate Milk + Protein + Banana + Rice Cakes",
+              "cal": 700,
+              "protein": 55,
+              "carbs": 100,
+              "fat": 8,
+              "desc": "20 oz chocolate milk, 1.5 scoop whey protein, 1 banana, 3 rice cakes. Set a phone alarm to eat this within 20 min of finishing.",
+              "tags": [
+                "recovery window",
+                "fast carbs",
+                "fast protein"
+              ]
+            },
+            {
+              "type": "Lunch",
+              "name": "Big Potato + Protein Bowl",
+              "cal": 870,
+              "protein": 55,
+              "carbs": 110,
+              "fat": 22,
+              "desc": "2 large Russet potatoes roasted and chunked, 7 oz shredded chicken or ground turkey, roasted peppers and onions, salsa, Greek yogurt.",
+              "tags": [
+                "Russet potato",
+                "high protein"
+              ]
+            },
+            {
+              "type": "Dinner",
+              "name": "Slow Cooker Chicken + Rice",
+              "cal": 790,
+              "protein": 52,
+              "carbs": 95,
+              "fat": 22,
+              "desc": "Chicken thighs cooked all day in slow cooker with salsa, cumin, and garlic \u2014 shred and serve over 1.5 cups white rice with black beans. Start before your run.",
+              "tags": [
+                "rice cooker",
+                "slow cooker",
+                "high protein"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "standard_30day": {
+      "label": "Standard High-Protein (30-Day)",
+      "description": "30-day rotating meal plan. Variety-focused, high protein, uses Kevin's Natural Foods and batch cooking.",
+      "type": "calendar",
+      "days": [
+        {
+          "day": "Monday",
+          "week": 1,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Greek Yogurt Power Bowl",
+              "cal": 310,
+              "protein": 32.0,
+              "carbs": 28.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Cottage Cheese & Cucumber Boats",
+              "cal": 130,
+              "protein": 18.0,
+              "carbs": 7.0,
+              "fat": 2.5
+            },
+            {
+              "type": "Lunch",
+              "name": "Turkey Taco Lettuce Wraps",
+              "cal": 380,
+              "protein": 40.0,
+              "carbs": 22.0,
+              "fat": 13.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Hard-Boiled Eggs & Bell Pepper",
+              "cal": 155,
+              "protein": 13.0,
+              "carbs": 8.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Dinner",
+              "name": "Sheet Pan Lemon Herb Chicken & Asparagus",
+              "cal": 375,
+              "protein": 42.0,
+              "carbs": 14.0,
+              "fat": 16.0
+            }
+          ]
+        },
+        {
+          "day": "Tuesday",
+          "week": 1,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Egg White Veggie Scramble & Toast",
+              "cal": 295,
+              "protein": 30.0,
+              "carbs": 22.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Protein Shake & Banana",
+              "cal": 250,
+              "protein": 26.0,
+              "carbs": 28.0,
+              "fat": 4.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Edamame with Sea Salt",
+              "cal": 120,
+              "protein": 11.0,
+              "carbs": 9.0,
+              "fat": 5.0
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled Chicken Caesar Salad",
+              "cal": 370,
+              "protein": 44.0,
+              "carbs": 14.0,
+              "fat": 14.0
+            }
+          ]
+        },
+        {
+          "day": "Wednesday",
+          "week": 1,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Overnight Oats with Chia & Berries",
+              "cal": 330,
+              "protein": 22.0,
+              "carbs": 38.0,
+              "fat": 9.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Turkey Slices & Pickle Spears",
+              "cal": 100,
+              "protein": 18.0,
+              "carbs": 4.0,
+              "fat": 1.5
+            },
+            {
+              "type": "Snack 2",
+              "name": "Rice Cake with Almond Butter",
+              "cal": 140,
+              "protein": 5.0,
+              "carbs": 17.0,
+              "fat": 7.0
+            }
+          ]
+        },
+        {
+          "day": "Thursday",
+          "week": 1,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "High-Protein Banana Pancakes",
+              "cal": 305,
+              "protein": 28.0,
+              "carbs": 30.0,
+              "fat": 7.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Beef Jerky & Apple Slices",
+              "cal": 180,
+              "protein": 16.0,
+              "carbs": 22.0,
+              "fat": 3.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "String Cheese & Grape Tomatoes",
+              "cal": 110,
+              "protein": 8.0,
+              "carbs": 6.0,
+              "fat": 5.0
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled Turkey Burgers with Zucchini",
+              "cal": 370,
+              "protein": 42.0,
+              "carbs": 18.0,
+              "fat": 14.0
+            }
+          ]
+        },
+        {
+          "day": "Friday",
+          "week": 1,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Smoked Salmon Egg Scramble",
+              "cal": 310,
+              "protein": 35.0,
+              "carbs": 12.0,
+              "fat": 13.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Greek Yogurt with Granola",
+              "cal": 215,
+              "protein": 18.0,
+              "carbs": 24.0,
+              "fat": 4.0
+            },
+            {
+              "type": "Lunch",
+              "name": "Asian Chicken Lettuce Cups",
+              "cal": 355,
+              "protein": 40.0,
+              "carbs": 20.0,
+              "fat": 11.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Celery with Peanut Butter",
+              "cal": 115,
+              "protein": 5.0,
+              "carbs": 8.0,
+              "fat": 7.0
+            }
+          ]
+        },
+        {
+          "day": "Saturday",
+          "week": 1,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Veggie-Loaded Frittata",
+              "cal": 290,
+              "protein": 28.0,
+              "carbs": 10.0,
+              "fat": 14.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Cottage Cheese & Pineapple",
+              "cal": 145,
+              "protein": 17.0,
+              "carbs": 15.0,
+              "fat": 1.5
+            },
+            {
+              "type": "Snack 2",
+              "name": "Tuna on Rice Crackers",
+              "cal": 155,
+              "protein": 17.0,
+              "carbs": 12.0,
+              "fat": 3.5
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled Flank Steak & Grilled Asparagus",
+              "cal": 380,
+              "protein": 44.0,
+              "carbs": 10.0,
+              "fat": 18.0
+            }
+          ]
+        },
+        {
+          "day": "Sunday",
+          "week": 1,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Protein French Toast",
+              "cal": 315,
+              "protein": 30.0,
+              "carbs": 28.0,
+              "fat": 9.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Almonds & Clementine",
+              "cal": 175,
+              "protein": 6.0,
+              "carbs": 17.0,
+              "fat": 11.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Protein Chocolate Pudding",
+              "cal": 170,
+              "protein": 20.0,
+              "carbs": 14.0,
+              "fat": 3.5
+            }
+          ]
+        },
+        {
+          "day": "Monday",
+          "week": 2,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Savory Egg & Turkey Muffins",
+              "cal": 280,
+              "protein": 32.0,
+              "carbs": 8.0,
+              "fat": 12.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Cucumber Hummus Dippers",
+              "cal": 130,
+              "protein": 6.0,
+              "carbs": 14.0,
+              "fat": 5.5
+            },
+            {
+              "type": "Lunch",
+              "name": "Spicy Peanut Chicken Noodle Bowl",
+              "cal": 385,
+              "protein": 42.0,
+              "carbs": 32.0,
+              "fat": 12.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Cottage Cheese Tomato Toast",
+              "cal": 175,
+              "protein": 14.0,
+              "carbs": 16.0,
+              "fat": 4.0
+            }
+          ]
+        },
+        {
+          "day": "Tuesday",
+          "week": 2,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Tropical Protein Smoothie Bowl",
+              "cal": 310,
+              "protein": 28.0,
+              "carbs": 32.0,
+              "fat": 7.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Turkey Roll-Ups with Avocado",
+              "cal": 165,
+              "protein": 15.0,
+              "carbs": 5.0,
+              "fat": 9.5
+            },
+            {
+              "type": "Snack 2",
+              "name": "Hard-Boiled Egg & Cherry Tomatoes",
+              "cal": 105,
+              "protein": 9.0,
+              "carbs": 5.0,
+              "fat": 5.5
+            }
+          ]
+        },
+        {
+          "day": "Wednesday",
+          "week": 2,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Ricotta & Berry Toast",
+              "cal": 300,
+              "protein": 22.0,
+              "carbs": 28.0,
+              "fat": 10.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Protein Shake",
+              "cal": 170,
+              "protein": 24.0,
+              "carbs": 10.0,
+              "fat": 3.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Edamame Guacamole & Veggies",
+              "cal": 155,
+              "protein": 9.0,
+              "carbs": 13.0,
+              "fat": 7.0
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled Salmon with Mango Salsa",
+              "cal": 370,
+              "protein": 40.0,
+              "carbs": 20.0,
+              "fat": 14.0
+            }
+          ]
+        },
+        {
+          "day": "Thursday",
+          "week": 2,
+          "meals": [
+            {
+              "type": "Snack 1",
+              "name": "String Cheese & Sliced Apple",
+              "cal": 155,
+              "protein": 8.0,
+              "carbs": 18.0,
+              "fat": 5.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Tuna Cucumber Rounds",
+              "cal": 115,
+              "protein": 16.0,
+              "carbs": 4.0,
+              "fat": 3.0
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled Chipotle Lime Chicken Bowls",
+              "cal": 360,
+              "protein": 46.0,
+              "carbs": 18.0,
+              "fat": 10.0
+            }
+          ]
+        },
+        {
+          "day": "Friday",
+          "week": 2,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Cottage Cheese Pancakes",
+              "cal": 295,
+              "protein": 30.0,
+              "carbs": 22.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Walnuts & Blueberries",
+              "cal": 175,
+              "protein": 4.0,
+              "carbs": 14.0,
+              "fat": 12.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Greek Yogurt Dip & Veggies",
+              "cal": 115,
+              "protein": 12.0,
+              "carbs": 9.0,
+              "fat": 2.0
+            },
+            {
+              "type": "Dinner",
+              "name": "Pesto Shrimp Zoodles",
+              "cal": 360,
+              "protein": 40.0,
+              "carbs": 16.0,
+              "fat": 15.0
+            }
+          ]
+        },
+        {
+          "day": "Saturday",
+          "week": 2,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Loaded Veggie Omelette",
+              "cal": 300,
+              "protein": 34.0,
+              "carbs": 10.0,
+              "fat": 13.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "High-Protein Chocolate Banana Shake",
+              "cal": 245,
+              "protein": 26.0,
+              "carbs": 26.0,
+              "fat": 4.0
+            },
+            {
+              "type": "Lunch",
+              "name": "Chicken & Avocado Grain Bowl",
+              "cal": 370,
+              "protein": 40.0,
+              "carbs": 28.0,
+              "fat": 13.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Smoked Turkey & Pickle Bites",
+              "cal": 95,
+              "protein": 12.0,
+              "carbs": 4.0,
+              "fat": 2.5
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled BBQ Chicken Thighs & Corn",
+              "cal": 380,
+              "protein": 42.0,
+              "carbs": 22.0,
+              "fat": 14.0
+            }
+          ]
+        },
+        {
+          "day": "Sunday",
+          "week": 2,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "A\u00e7a\u00ed Protein Bowl",
+              "cal": 315,
+              "protein": 26.0,
+              "carbs": 34.0,
+              "fat": 9.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Non-Fat Greek Yogurt & Walnuts",
+              "cal": 180,
+              "protein": 18.0,
+              "carbs": 11.0,
+              "fat": 7.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Protein Banana Mug Cake",
+              "cal": 190,
+              "protein": 18.0,
+              "carbs": 22.0,
+              "fat": 4.0
+            }
+          ]
+        },
+        {
+          "day": "Monday",
+          "week": 3,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Spinach & Feta Egg White Wrap",
+              "cal": 295,
+              "protein": 30.0,
+              "carbs": 24.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Protein Shake & Orange",
+              "cal": 220,
+              "protein": 24.0,
+              "carbs": 18.0,
+              "fat": 3.0
+            },
+            {
+              "type": "Lunch",
+              "name": "Tuna Nicoise-Style Bowl",
+              "cal": 360,
+              "protein": 40.0,
+              "carbs": 20.0,
+              "fat": 12.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Non-Fat Greek Yogurt & Cinnamon",
+              "cal": 110,
+              "protein": 16.0,
+              "carbs": 9.0,
+              "fat": 0.5
+            }
+          ]
+        },
+        {
+          "day": "Tuesday",
+          "week": 3,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Peanut Butter Banana Overnight Oats",
+              "cal": 340,
+              "protein": 24.0,
+              "carbs": 38.0,
+              "fat": 10.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Beef Jerky & Pear",
+              "cal": 185,
+              "protein": 16.0,
+              "carbs": 24.0,
+              "fat": 3.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Celery & Almond Butter",
+              "cal": 115,
+              "protein": 4.0,
+              "carbs": 8.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled Shrimp Skewers & Cauliflower Fried Rice",
+              "cal": 355,
+              "protein": 38.0,
+              "carbs": 22.0,
+              "fat": 11.0
+            }
+          ]
+        },
+        {
+          "day": "Wednesday",
+          "week": 3,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Smoked Turkey Hash",
+              "cal": 300,
+              "protein": 28.0,
+              "carbs": 22.0,
+              "fat": 10.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Low-Fat Cottage Cheese & Peach",
+              "cal": 140,
+              "protein": 17.0,
+              "carbs": 14.0,
+              "fat": 1.5
+            },
+            {
+              "type": "Lunch",
+              "name": "Grilled Chicken Wrap (from Batch)",
+              "cal": 355,
+              "protein": 40.0,
+              "carbs": 24.0,
+              "fat": 10.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Rice Cake with Peanut Butter & Banana",
+              "cal": 165,
+              "protein": 5.0,
+              "carbs": 22.0,
+              "fat": 6.0
+            }
+          ]
+        },
+        {
+          "day": "Thursday",
+          "week": 3,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "A\u00e7a\u00ed Protein Bowl",
+              "cal": 315,
+              "protein": 26.0,
+              "carbs": 34.0,
+              "fat": 9.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Turkey & Cucumber Roll-Ups",
+              "cal": 115,
+              "protein": 16.0,
+              "carbs": 5.0,
+              "fat": 2.5
+            },
+            {
+              "type": "Snack 2",
+              "name": "Protein Chocolate Mousse",
+              "cal": 170,
+              "protein": 20.0,
+              "carbs": 14.0,
+              "fat": 3.5
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled Tilapia with Mango Avocado Salsa",
+              "cal": 355,
+              "protein": 42.0,
+              "carbs": 16.0,
+              "fat": 11.0
+            }
+          ]
+        },
+        {
+          "day": "Friday",
+          "week": 3,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Blueberry Protein Muffins (Batch)",
+              "cal": 290,
+              "protein": 26.0,
+              "carbs": 26.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "String Cheese & Grapes",
+              "cal": 145,
+              "protein": 8.0,
+              "carbs": 17.0,
+              "fat": 4.0
+            },
+            {
+              "type": "Lunch",
+              "name": "Mediterranean Tuna Bowl",
+              "cal": 360,
+              "protein": 40.0,
+              "carbs": 28.0,
+              "fat": 10.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Almond Butter & Apple Slices",
+              "cal": 175,
+              "protein": 5.0,
+              "carbs": 22.0,
+              "fat": 8.0
+            }
+          ]
+        },
+        {
+          "day": "Saturday",
+          "week": 3,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Protein Waffles",
+              "cal": 310,
+              "protein": 30.0,
+              "carbs": 28.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Hummus & Veggie Plate",
+              "cal": 145,
+              "protein": 7.0,
+              "carbs": 16.0,
+              "fat": 6.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Non-Fat Greek Yogurt & Walnuts",
+              "cal": 180,
+              "protein": 18.0,
+              "carbs": 11.0,
+              "fat": 7.0
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled Whole Chicken (Spatchcock) \u2014 Batch",
+              "cal": 390,
+              "protein": 48.0,
+              "carbs": 8.0,
+              "fat": 18.0
+            }
+          ]
+        },
+        {
+          "day": "Sunday",
+          "week": 3,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Egg Muffin Cups (Batch)",
+              "cal": 285,
+              "protein": 30.0,
+              "carbs": 8.0,
+              "fat": 14.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Cottage Cheese & Mango",
+              "cal": 145,
+              "protein": 17.0,
+              "carbs": 15.0,
+              "fat": 1.5
+            },
+            {
+              "type": "Snack 2",
+              "name": "Protein Mug Cake",
+              "cal": 190,
+              "protein": 18.0,
+              "carbs": 22.0,
+              "fat": 4.0
+            }
+          ]
+        },
+        {
+          "day": "Monday",
+          "week": 4,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Green Power Smoothie Bowl",
+              "cal": 305,
+              "protein": 28.0,
+              "carbs": 30.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Beef Jerky & Celery",
+              "cal": 145,
+              "protein": 16.0,
+              "carbs": 9.0,
+              "fat": 4.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Edamame & Sea Salt",
+              "cal": 120,
+              "protein": 11.0,
+              "carbs": 9.0,
+              "fat": 5.0
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled Flank Steak Fajita Bowls",
+              "cal": 385,
+              "protein": 44.0,
+              "carbs": 22.0,
+              "fat": 14.0
+            }
+          ]
+        },
+        {
+          "day": "Tuesday",
+          "week": 4,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Savory Quinoa Breakfast Bowl",
+              "cal": 310,
+              "protein": 26.0,
+              "carbs": 30.0,
+              "fat": 10.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Protein Shake",
+              "cal": 170,
+              "protein": 24.0,
+              "carbs": 10.0,
+              "fat": 3.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Walnuts & Blueberries",
+              "cal": 175,
+              "protein": 4.0,
+              "carbs": 14.0,
+              "fat": 12.0
+            }
+          ]
+        },
+        {
+          "day": "Wednesday",
+          "week": 4,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Turkey Sausage & Sweet Potato Hash",
+              "cal": 300,
+              "protein": 28.0,
+              "carbs": 22.0,
+              "fat": 10.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Greek Yogurt with Granola",
+              "cal": 215,
+              "protein": 18.0,
+              "carbs": 24.0,
+              "fat": 4.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Tuna on Rice Crackers",
+              "cal": 155,
+              "protein": 17.0,
+              "carbs": 12.0,
+              "fat": 3.5
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled Salmon with Lemon Dill & Roasted Asparagus",
+              "cal": 375,
+              "protein": 42.0,
+              "carbs": 12.0,
+              "fat": 16.0
+            }
+          ]
+        },
+        {
+          "day": "Thursday",
+          "week": 4,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Overnight Oats with Nut Butter & Banana",
+              "cal": 340,
+              "protein": 24.0,
+              "carbs": 38.0,
+              "fat": 10.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Cucumber Hummus Dippers",
+              "cal": 130,
+              "protein": 6.0,
+              "carbs": 14.0,
+              "fat": 5.5
+            },
+            {
+              "type": "Snack 2",
+              "name": "String Cheese & Grape Tomatoes",
+              "cal": 110,
+              "protein": 8.0,
+              "carbs": 6.0,
+              "fat": 5.0
+            }
+          ]
+        },
+        {
+          "day": "Friday",
+          "week": 4,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Banana Protein Pancakes",
+              "cal": 305,
+              "protein": 28.0,
+              "carbs": 30.0,
+              "fat": 7.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Low-Fat Cottage Cheese & Tomato",
+              "cal": 130,
+              "protein": 17.0,
+              "carbs": 7.0,
+              "fat": 2.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Protein Chocolate Pudding",
+              "cal": 170,
+              "protein": 20.0,
+              "carbs": 14.0,
+              "fat": 3.5
+            }
+          ]
+        },
+        {
+          "day": "Saturday",
+          "week": 4,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Power Egg Bowl",
+              "cal": 295,
+              "protein": 32.0,
+              "carbs": 14.0,
+              "fat": 12.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Protein Shake & Banana",
+              "cal": 250,
+              "protein": 26.0,
+              "carbs": 28.0,
+              "fat": 4.0
+            },
+            {
+              "type": "Lunch",
+              "name": "Grilled Chicken Cobb Salad",
+              "cal": 370,
+              "protein": 42.0,
+              "carbs": 10.0,
+              "fat": 18.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Edamame & Sea Salt",
+              "cal": 120,
+              "protein": 11.0,
+              "carbs": 9.0,
+              "fat": 5.0
+            },
+            {
+              "type": "Dinner",
+              "name": "Grilled Whole Beef Tenderloin & Grilled Veggies",
+              "cal": 390,
+              "protein": 46.0,
+              "carbs": 14.0,
+              "fat": 16.0
+            }
+          ]
+        },
+        {
+          "day": "Sunday",
+          "week": 4,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Greek Yogurt Parfait",
+              "cal": 310,
+              "protein": 28.0,
+              "carbs": 30.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Cottage Cheese & Pineapple",
+              "cal": 145,
+              "protein": 17.0,
+              "carbs": 15.0,
+              "fat": 1.5
+            },
+            {
+              "type": "Snack 2",
+              "name": "Almonds & Orange",
+              "cal": 175,
+              "protein": 6.0,
+              "carbs": 17.0,
+              "fat": 11.0
+            }
+          ]
+        },
+        {
+          "day": "Monday",
+          "week": 4,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Egg White Veggie Scramble & Toast",
+              "cal": 295,
+              "protein": 30.0,
+              "carbs": 22.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Cottage Cheese & Berries",
+              "cal": 130,
+              "protein": 17.0,
+              "carbs": 10.0,
+              "fat": 2.0
+            },
+            {
+              "type": "Lunch",
+              "name": "Chicken & Quinoa Power Bowl",
+              "cal": 365,
+              "protein": 42.0,
+              "carbs": 28.0,
+              "fat": 10.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Hard-Boiled Eggs & Bell Pepper",
+              "cal": 155,
+              "protein": 13.0,
+              "carbs": 8.0,
+              "fat": 8.0
+            }
+          ]
+        },
+        {
+          "day": "Tuesday",
+          "week": 4,
+          "meals": [
+            {
+              "type": "Breakfast",
+              "name": "Greek Yogurt Power Bowl",
+              "cal": 310,
+              "protein": 32.0,
+              "carbs": 28.0,
+              "fat": 8.0
+            },
+            {
+              "type": "Snack 1",
+              "name": "Turkey Slices & Apple",
+              "cal": 160,
+              "protein": 18.0,
+              "carbs": 16.0,
+              "fat": 2.0
+            },
+            {
+              "type": "Snack 2",
+              "name": "Walnuts & Blueberries",
+              "cal": 175,
+              "protein": 4.0,
+              "carbs": 14.0,
+              "fat": 12.0
+            }
+          ]
+        }
+      ]
+    },
+    "paleo_30day": {
+      "label": "Paleo (30-Day)",
+      "description": "Grain-free, dairy-light, whole food focused. All meals paleo-compliant with cooked vegetables.",
+      "type": "library",
+      "meals": [
+        {
+          "name": "Turkey & Egg Scramble with Sweet Potato Hash",
+          "type": "breakfast",
+          "cal": 520,
+          "protein": 48,
+          "carbs": 28,
+          "fat": 22,
+          "ingredients": [
+            "4 oz 99% lean ground turkey",
+            "3 large eggs",
+            "1 cup diced sweet potato",
+            "\u00bd red bell pepper, diced",
+            "\u00bc onion diced",
+            "1 tsp coconut oil",
+            "Garlic powder, cumin, S&P"
+          ],
+          "steps": [
+            "Saut\u00e9 sweet potato in coconut oil over medium heat 8\u201310 min until tender and slightly caramelized.",
+            "Add bell pepper and onion; cook 3 more min until soft.",
+            "Push veggies to side, brown ground turkey, seasoning well with garlic powder and cumin.",
+            "Crack eggs over everything, scramble together until fully set. Season to taste."
+          ]
+        },
+        {
+          "name": "Smoked Salmon & Egg White Omelette with Cooked Spinach",
+          "type": "breakfast",
+          "cal": 480,
+          "protein": 52,
+          "carbs": 8,
+          "fat": 22,
+          "ingredients": [
+            "5 egg whites + 1 whole egg",
+            "3 oz smoked salmon",
+            "1 cup spinach (wilted in pan)",
+            "\u00bc avocado sliced",
+            "1 tsp coconut oil",
+            "Capers, dill, lemon"
+          ],
+          "steps": [
+            "Wilt spinach in a little oil in nonstick pan, set aside.",
+            "Whisk eggs, pour into same pan over medium heat. Lift edges as it sets.",
+            "Add wilted spinach to one half, fold omelette.",
+            "Top with smoked salmon, capers, and avocado. Finish with lemon zest."
+          ]
+        },
+        {
+          "name": "Bacon & Veggie Baked Egg Cups",
+          "type": "breakfast",
+          "cal": 500,
+          "protein": 44,
+          "carbs": 6,
+          "fat": 32,
+          "ingredients": [
+            "5 large eggs",
+            "4 strips uncured bacon",
+            "\u00bd cup diced bell pepper",
+            "\u00bc cup diced onion",
+            "Handful spinach (wilted)",
+            "S&P, garlic powder"
+          ],
+          "steps": [
+            "Preheat oven to 375\u00b0F. Cook bacon until just underdone. Line each muffin cup with a strip.",
+            "Saut\u00e9 vegetables and spinach 3\u20134 min until softened. Divide into cups.",
+            "Crack one egg into each cup, season well. Bake 15\u201318 min until whites are set.",
+            "Cool 2 min before removing. Great for meal prep \u2014 keeps 4 days in fridge."
+          ]
+        },
+        {
+          "name": "Sweet Potato Turkey Patties with Poached Eggs",
+          "type": "breakfast",
+          "cal": 540,
+          "protein": 50,
+          "carbs": 26,
+          "fat": 24,
+          "ingredients": [
+            "5 oz 99% lean ground turkey",
+            "\u00bc cup mashed sweet potato",
+            "Sage, fennel seed, garlic powder",
+            "2 eggs (poached)",
+            "1 cup cooked zucchini slices",
+            "Olive oil, S&P"
+          ],
+          "steps": [
+            "Mix turkey with mashed sweet potato, sage, fennel seed, garlic. Form into 2\u20133 small patties.",
+            "Pan-fry in light oil over medium 4 min per side until cooked through.",
+            "Poach eggs in barely simmering salted water 3\u20134 min.",
+            "Serve patties and eggs over soft-cooked zucchini slices."
+          ]
+        },
+        {
+          "name": "Banana Coconut Protein Smoothie Bowl",
+          "type": "breakfast",
+          "cal": 490,
+          "protein": 42,
+          "carbs": 36,
+          "fat": 18,
+          "ingredients": [
+            "1 frozen banana",
+            "1 scoop egg-white or paleo protein powder",
+            "\u00bd cup light canned coconut milk",
+            "2 tbsp almond butter (toasted)",
+            "Toppings: cooked banana, hemp seeds",
+            "Drizzle of raw honey"
+          ],
+          "steps": [
+            "Blend frozen banana, protein powder, coconut milk, and almond butter until thick.",
+            "Pour into bowl \u2014 consistency should be very thick, spoonable.",
+            "Top with warm pan-caramelized banana slices and hemp seeds.",
+            "Drizzle honey if desired. Note: all toppings should be soft/cooked."
+          ]
+        },
+        {
+          "name": "Steak & Eggs with Saut\u00e9ed Mushrooms",
+          "type": "breakfast",
+          "cal": 620,
+          "protein": 62,
+          "carbs": 4,
+          "fat": 38,
+          "ingredients": [
+            "5 oz flank steak",
+            "2 pasture-raised eggs",
+            "1 cup cremini mushrooms sliced",
+            "1 tsp ghee",
+            "Garlic, thyme, S&P"
+          ],
+          "steps": [
+            "Sear steak in cast iron with ghee 3 min per side for medium. Rest 5 min, slice thin.",
+            "Saut\u00e9 mushrooms with garlic and thyme in same pan until golden and soft, 5\u20136 min.",
+            "Fry eggs in residual fat to your preference.",
+            "Plate steak and mushrooms together, eggs on side."
+          ]
+        },
+        {
+          "name": "Paleo Banana Pancakes with Turkey Bacon",
+          "type": "breakfast",
+          "cal": 540,
+          "protein": 44,
+          "carbs": 42,
+          "fat": 20,
+          "ingredients": [
+            "1 banana mashed",
+            "2 eggs",
+            "\u00bc cup almond flour",
+            "1 tsp cinnamon",
+            "4 strips turkey bacon",
+            "\u00bd cup cooked blueberries (warmed)",
+            "Raw honey drizzle"
+          ],
+          "steps": [
+            "Mash banana with eggs and almond flour. Add cinnamon and a pinch of salt.",
+            "Cook small pancakes on medium-low in coconut oil 2\u20133 min per side until set.",
+            "Cook turkey bacon until crispy.",
+            "Warm blueberries briefly in a small pan or microwave. Serve pancakes topped with warm berries and a light honey drizzle."
+          ]
+        },
+        {
+          "name": "Chicken Apple Breakfast Hash",
+          "type": "breakfast",
+          "cal": 510,
+          "protein": 46,
+          "carbs": 30,
+          "fat": 18,
+          "ingredients": [
+            "5 oz ground chicken",
+            "1 medium sweet potato diced small",
+            "\u00bd apple diced small",
+            "\u00bc onion diced",
+            "\u00bd tsp cinnamon",
+            "Garlic powder, S&P",
+            "1 tsp coconut oil"
+          ],
+          "steps": [
+            "Saut\u00e9 sweet potato in coconut oil 8 min until tender.",
+            "Add onion and apple, cook 4 min until softened.",
+            "Add ground chicken, cook through, breaking into small pieces. Season with cinnamon, garlic, S&P.",
+            "Let sit 1\u20132 min for a light crust on the bottom. Serve hot."
+          ]
+        },
+        {
+          "name": "Baked Frittata with Salmon & Zucchini",
+          "type": "breakfast",
+          "cal": 480,
+          "protein": 50,
+          "carbs": 6,
+          "fat": 26,
+          "ingredients": [
+            "4 eggs + 2 egg whites",
+            "3 oz smoked or baked salmon",
+            "1 zucchini thinly sliced",
+            "\u00bd red onion thinly sliced",
+            "1 tbsp olive oil",
+            "Dill, capers, S&P"
+          ],
+          "steps": [
+            "Preheat oven to 375\u00b0F. Saut\u00e9 zucchini and onion in olive oil until very soft, 6\u20138 min.",
+            "Whisk eggs, season well. Pour over softened vegetables in oven-safe skillet.",
+            "Nestle salmon pieces into egg mixture. Top with capers and dill.",
+            "Bake 18\u201320 min until set and lightly golden. Slice into wedges."
+          ]
+        },
+        {
+          "name": "Ground Turkey Bowl with Roasted Sweet Potato & Egg",
+          "type": "breakfast",
+          "cal": 530,
+          "protein": 52,
+          "carbs": 28,
+          "fat": 20,
+          "ingredients": [
+            "5 oz ground turkey",
+            "1 cup roasted sweet potato cubes",
+            "1 soft-boiled egg halved",
+            "\u00bc avocado mashed",
+            "Cumin, smoked paprika, garlic",
+            "Coconut oil, S&P"
+          ],
+          "steps": [
+            "Roast sweet potato at 400\u00b0F 20 min until tender.",
+            "Brown turkey in skillet with cumin, paprika, and garlic.",
+            "Soft-boil egg: 7 min in boiling water, then ice bath to stop cooking.",
+            "Bowl: turkey + sweet potato + halved egg + mashed avocado on top."
+          ]
+        },
+        {
+          "name": "Big Grilled Chicken Bowl (Warm Veggies)",
+          "type": "lunch",
+          "cal": 560,
+          "protein": 56,
+          "carbs": 22,
+          "fat": 26,
+          "ingredients": [
+            "7 oz grilled chicken breast",
+            "\u00bd cup roasted zucchini",
+            "\u00bd cup roasted cherry tomatoes",
+            "\u00bd cup roasted bell peppers",
+            "\u00bd avocado",
+            "2 tbsp olive oil + lemon dressing",
+            "10 Kalamata olives"
+          ],
+          "steps": [
+            "Season chicken, grill or pan-sear 6\u20137 min per side. Rest and slice.",
+            "Roast zucchini, tomatoes, and peppers at 425\u00b0F 15\u201318 min until caramelized.",
+            "Whisk olive oil with lemon, salt, and dried oregano.",
+            "Bowl: warm roasted veggies as base, chicken on top, avocado, olives, and dressing."
+          ]
+        },
+        {
+          "name": "Beef & Broccoli Stir-Fry (Coconut Aminos)",
+          "type": "lunch",
+          "cal": 580,
+          "protein": 52,
+          "carbs": 24,
+          "fat": 28,
+          "ingredients": [
+            "6 oz flank steak thinly sliced",
+            "3 cups broccoli florets (fully cooked)",
+            "3 tbsp coconut aminos",
+            "1 tbsp sesame oil",
+            "2 garlic cloves minced",
+            "1 tsp fresh ginger",
+            "Red pepper flakes"
+          ],
+          "steps": [
+            "Marinate steak slices in coconut aminos, garlic, and ginger for 15+ min.",
+            "Blanch broccoli in boiling water 4 min until very tender. Drain.",
+            "Sear beef in very hot sesame oil 1\u20132 min per side. Remove.",
+            "Stir-fry tender broccoli in same pan 2 min. Add remaining marinade and toss with beef."
+          ]
+        },
+        {
+          "name": "Tuna-Stuffed Roasted Pepper Boats",
+          "type": "lunch",
+          "cal": 480,
+          "protein": 50,
+          "carbs": 12,
+          "fat": 22,
+          "ingredients": [
+            "2 cans albacore tuna in water",
+            "2 large bell peppers roasted",
+            "1 tbsp paleo mayo (avocado oil)",
+            "Celery cooked soft, red onion saut\u00e9ed",
+            "Dill, lemon juice, S&P",
+            "Capers"
+          ],
+          "steps": [
+            "Roast peppers at 450\u00b0F 20 min until charred. Peel, halve, and deseed.",
+            "Soften diced celery and onion in a pan with olive oil 5 min.",
+            "Drain tuna, mix with mayo, softened celery, onion, dill, capers, lemon juice.",
+            "Fill roasted pepper halves with tuna mixture. Serve warm or room temp."
+          ]
+        },
+        {
+          "name": "Turkey Meatball Zucchini Noodle Bowl",
+          "type": "lunch",
+          "cal": 560,
+          "protein": 54,
+          "carbs": 18,
+          "fat": 24,
+          "ingredients": [
+            "6 oz ground turkey (meatballs)",
+            "2 zucchini spiralized then saut\u00e9ed",
+            "\u00bd cup paleo marinara (no sugar)",
+            "Garlic, Italian herbs, egg",
+            "1 tbsp olive oil",
+            "Fresh basil"
+          ],
+          "steps": [
+            "Mix turkey with garlic, herbs, egg, salt. Roll into 1-inch balls. Bake at 400\u00b0F 18 min.",
+            "Saut\u00e9 zucchini noodles in olive oil 3\u20134 min until tender (not mushy).",
+            "Heat marinara, toss with noodles and meatballs.",
+            "Top with fresh basil. All vegetables must be soft-cooked for gut health."
+          ]
+        },
+        {
+          "name": "Chicken & Roasted Veggie Warm Bowl",
+          "type": "lunch",
+          "cal": 540,
+          "protein": 54,
+          "carbs": 26,
+          "fat": 22,
+          "ingredients": [
+            "7 oz grilled chicken breast",
+            "Roasted zucchini, red pepper, onion",
+            "\u00bd avocado",
+            "3 tbsp olive oil + balsamic",
+            "S&P, dried oregano"
+          ],
+          "steps": [
+            "Roast veggies at 425\u00b0F until very soft and caramelized, 20\u201325 min.",
+            "Grill or pan-cook chicken with olive oil and herbs.",
+            "Whisk dressing: olive oil, balsamic, S&P, oregano.",
+            "Build warm bowl with roasted veggies, sliced chicken, avocado, and dressing."
+          ]
+        },
+        {
+          "name": "Egg Drop Bone Broth Bowl with Chicken & Kale",
+          "type": "lunch",
+          "cal": 480,
+          "protein": 56,
+          "carbs": 14,
+          "fat": 18,
+          "ingredients": [
+            "3 cups chicken bone broth",
+            "5 oz shredded cooked chicken",
+            "2 eggs beaten",
+            "2 cups kale (well cooked)",
+            "Ginger, garlic, coconut aminos",
+            "Scallions, sesame oil"
+          ],
+          "steps": [
+            "Bring broth to simmer with minced garlic and ginger. Add coconut aminos.",
+            "Add well-cooked kale (should be very soft) and shredded chicken; simmer 3 min.",
+            "Slowly drizzle beaten eggs while stirring gently to create ribbons.",
+            "Finish with sesame oil and sliced scallions. The kale must be thoroughly soft."
+          ]
+        },
+        {
+          "name": "Bison Burger Patty with Roasted Sweet Potato",
+          "type": "lunch",
+          "cal": 680,
+          "protein": 54,
+          "carbs": 30,
+          "fat": 28,
+          "ingredients": [
+            "7 oz ground bison",
+            "1 medium sweet potato roasted",
+            "\u00bd avocado mashed",
+            "Garlic, smoked paprika, S&P",
+            "1 tsp ghee",
+            "Paleo mustard"
+          ],
+          "steps": [
+            "Cut sweet potato into wedges, roast at 425\u00b0F 25 min with olive oil and smoked paprika.",
+            "Mix bison with garlic, paprika, and S&P. Form 2 patties.",
+            "Sear in ghee 4 min per side. Rest before cutting.",
+            "Serve patties with roasted sweet potato wedges and mashed avocado. No raw wraps."
+          ]
+        },
+        {
+          "name": "Pork Tenderloin Slices with Roasted Fennel & Carrots",
+          "type": "lunch",
+          "cal": 560,
+          "protein": 52,
+          "carbs": 22,
+          "fat": 22,
+          "ingredients": [
+            "6 oz roasted pork tenderloin sliced",
+            "1 fennel bulb sliced",
+            "3 carrots chopped",
+            "2 tbsp olive oil",
+            "Rosemary, garlic, S&P",
+            "Apple cider vinegar drizzle"
+          ],
+          "steps": [
+            "Roast fennel and carrots at 400\u00b0F with olive oil, rosemary, garlic until very tender, 25 min.",
+            "Slice pre-roasted or leftover pork tenderloin.",
+            "Warm pork in pan with a splash of bone broth.",
+            "Plate pork over roasted fennel and carrots. Drizzle apple cider vinegar."
+          ]
+        },
+        {
+          "name": "Salmon Patties with Roasted Asparagus",
+          "type": "lunch",
+          "cal": 560,
+          "protein": 52,
+          "carbs": 14,
+          "fat": 28,
+          "ingredients": [
+            "2 cans wild salmon",
+            "1 egg",
+            "\u00bc cup almond flour",
+            "Garlic, dill, lemon zest",
+            "1 bunch asparagus (roasted)",
+            "Paleo mayo + lemon for dipping"
+          ],
+          "steps": [
+            "Drain salmon, mix with egg, almond flour, garlic, dill, lemon zest, S&P.",
+            "Form into 3\u20134 patties. Pan-fry in oil 3\u20134 min per side until golden.",
+            "Roast asparagus at 425\u00b0F 12 min until tender (fully cooked, not crispy-raw).",
+            "Serve patties with asparagus and a side of lemony paleo mayo."
+          ]
+        },
+        {
+          "name": "Shrimp Stir-Fry with Cauli Rice",
+          "type": "lunch",
+          "cal": 520,
+          "protein": 52,
+          "carbs": 20,
+          "fat": 22,
+          "ingredients": [
+            "9 oz shrimp peeled",
+            "2 cups cauliflower rice",
+            "Bell peppers fully cooked",
+            "Coconut aminos, sesame oil",
+            "Garlic, ginger",
+            "Scallions"
+          ],
+          "steps": [
+            "Pulse cauliflower florets in food processor until rice-like. Saut\u00e9 in oil 5\u20136 min until tender.",
+            "Stir-fry shrimp in sesame oil with garlic and ginger 2\u20133 min per side.",
+            "Add cooked bell peppers and coconut aminos. Toss with shrimp.",
+            "Serve over cauliflower rice. Top with scallions."
+          ]
+        },
+        {
+          "name": "Hard-Boiled Eggs + Toasted Almond Butter & Apple",
+          "type": "snack",
+          "cal": 310,
+          "protein": 18,
+          "carbs": 18,
+          "fat": 18,
+          "ingredients": [
+            "2 hard-boiled eggs",
+            "1 medium apple sliced (peeled)",
+            "1.5 tbsp almond butter (toasted/roasted only)"
+          ],
+          "steps": [
+            "Boil eggs 10 min, peel. Peel apple before slicing to remove skin (easier on gut).",
+            "Serve egg halves with apple slices and toasted almond butter for dipping.",
+            "Note: use only roasted/toasted almond butter \u2014 not raw."
+          ]
+        },
+        {
+          "name": "Beef Jerky + Toasted Pecans + Cooked Berries",
+          "type": "snack",
+          "cal": 280,
+          "protein": 22,
+          "carbs": 16,
+          "fat": 14,
+          "ingredients": [
+            "1.5 oz sugar-free beef jerky",
+            "1 oz toasted pecans",
+            "\u00bd cup warmed blueberries"
+          ],
+          "steps": [
+            "Toast pecans in dry pan over medium 3\u20134 min until fragrant. Cool before eating.",
+            "Warm blueberries briefly in microwave or small pan \u2014 softens skins.",
+            "Combine with jerky. Look for jerky with no added sugar, nitrate-free."
+          ]
+        },
+        {
+          "name": "Turkey Roll-Ups with Avocado",
+          "type": "snack",
+          "cal": 290,
+          "protein": 28,
+          "carbs": 8,
+          "fat": 16,
+          "ingredients": [
+            "3 oz nitrate-free deli turkey",
+            "\u00bd avocado mashed",
+            "Lemon juice, S&P",
+            "Cucumber slices (peeled, seeded)"
+          ],
+          "steps": [
+            "Mash avocado with lemon and S&P.",
+            "Spread avocado on turkey slices, roll up tightly.",
+            "Serve with peeled, seeded cucumber slices for crunch without raw skin irritation."
+          ]
+        },
+        {
+          "name": "Soft-Boiled Eggs with Toasted Coconut & Banana",
+          "type": "snack",
+          "cal": 300,
+          "protein": 16,
+          "carbs": 22,
+          "fat": 16,
+          "ingredients": [
+            "2 soft-boiled eggs",
+            "\u00bd banana sliced",
+            "2 tbsp toasted coconut flakes",
+            "Drizzle of honey"
+          ],
+          "steps": [
+            "Toast coconut flakes in dry pan 2\u20133 min until golden. Cool.",
+            "Soft-boil eggs 6\u20137 min, peel carefully.",
+            "Serve with sliced banana and toasted coconut. Honey optional."
+          ]
+        },
+        {
+          "name": "Salmon Cucumber Rounds (Peeled, Seeded Cuke)",
+          "type": "snack",
+          "cal": 240,
+          "protein": 24,
+          "carbs": 4,
+          "fat": 12,
+          "ingredients": [
+            "2 oz smoked salmon",
+            "\u00bd cucumber (peeled and seeded)",
+            "\u00bc avocado mashed",
+            "Capers, dill, lemon"
+          ],
+          "steps": [
+            "Peel cucumber completely, halve lengthwise and scoop out seeds with spoon.",
+            "Slice into \u00bd-inch rounds (seeded and peeled = much gentler on gut).",
+            "Top with mashed avocado, smoked salmon, caper, and dill."
+          ]
+        },
+        {
+          "name": "Coconut Energy Bites",
+          "type": "snack",
+          "cal": 280,
+          "protein": 14,
+          "carbs": 16,
+          "fat": 18,
+          "ingredients": [
+            "1 cup almond flour",
+            "2 tbsp coconut oil melted",
+            "2 tbsp raw honey",
+            "\u00bc cup toasted shredded coconut",
+            "1 scoop protein powder",
+            "Pinch sea salt"
+          ],
+          "steps": [
+            "Mix all ingredients until a dough forms. Refrigerate 15 min to firm up.",
+            "Roll into small balls, then roll in toasted coconut (not raw).",
+            "Store in fridge up to a week. Makes ~8 bites \u2014 serving is 2 bites."
+          ]
+        },
+        {
+          "name": "Prosciutto Wrapped Cooked Pear",
+          "type": "snack",
+          "cal": 260,
+          "protein": 14,
+          "carbs": 16,
+          "fat": 12,
+          "ingredients": [
+            "2 oz prosciutto",
+            "1 ripe pear peeled and baked",
+            "1 oz toasted macadamia nuts (chopped)"
+          ],
+          "steps": [
+            "Peel and halve pear. Bake at 375\u00b0F 15 min until tender throughout.",
+            "Cool slightly, then wrap each half with prosciutto.",
+            "Serve with roughly chopped toasted macadamia nuts on the side."
+          ]
+        },
+        {
+          "name": "Boiled Eggs + Bone Broth Cup",
+          "type": "snack",
+          "cal": 220,
+          "protein": 22,
+          "carbs": 2,
+          "fat": 12,
+          "ingredients": [
+            "2 hard-boiled eggs",
+            "1 cup chicken bone broth warmed",
+            "S&P, garlic powder",
+            "Fresh herbs (optional)"
+          ],
+          "steps": [
+            "Warm bone broth in small saucepan. Season with S&P and garlic.",
+            "Peel and halve eggs. Season with S&P.",
+            "Sip broth alongside eggs \u2014 gut-healing and protein-rich."
+          ]
+        },
+        {
+          "name": "Sweet Potato Rounds with Almond Butter Drizzle",
+          "type": "snack",
+          "cal": 290,
+          "protein": 8,
+          "carbs": 32,
+          "fat": 14,
+          "ingredients": [
+            "1 small sweet potato",
+            "1.5 tbsp roasted almond butter",
+            "Drizzle of honey",
+            "Cinnamon"
+          ],
+          "steps": [
+            "Slice sweet potato into \u00bd-inch rounds. Roast at 400\u00b0F 20 min until tender.",
+            "Let cool slightly. Drizzle with roasted almond butter.",
+            "Top with a tiny drizzle of honey and a pinch of cinnamon."
+          ]
+        },
+        {
+          "name": "Tuna Avocado Boats",
+          "type": "snack",
+          "cal": 310,
+          "protein": 26,
+          "carbs": 4,
+          "fat": 20,
+          "ingredients": [
+            "1 can albacore tuna",
+            "\u00bd avocado",
+            "1 tsp paleo mayo",
+            "Lemon, dill, S&P"
+          ],
+          "steps": [
+            "Drain tuna, mix with mayo, lemon juice, dill, and S&P.",
+            "Scoop directly into avocado half (remove pit, keep shell).",
+            "Eat with a spoon \u2014 no crackers or bread needed."
+          ]
+        },
+        {
+          "name": "Pan-Seared Salmon with Asparagus & Cauliflower Mash",
+          "type": "dinner",
+          "cal": 700,
+          "protein": 66,
+          "carbs": 18,
+          "fat": 30,
+          "ingredients": [
+            "8 oz salmon fillet",
+            "1 head cauliflower",
+            "1 bunch asparagus (roasted fully)",
+            "2 tsp ghee",
+            "Garlic cloves",
+            "Lemon, fresh dill, S&P"
+          ],
+          "steps": [
+            "Steam cauliflower until very soft. Blend with 1 tsp ghee, roasted garlic, salt until smooth.",
+            "Roast asparagus at 425\u00b0F for 15 min until fully tender throughout.",
+            "Pat salmon dry. Sear skin-side down in hot ghee 4 min, flip 2\u20133 min. Finish with lemon and dill.",
+            "Plate cauliflower mash topped with salmon, asparagus on side."
+          ]
+        },
+        {
+          "name": "Herb-Roasted Chicken Thighs with Roasted Root Vegetables",
+          "type": "dinner",
+          "cal": 720,
+          "protein": 56,
+          "carbs": 34,
+          "fat": 28,
+          "ingredients": [
+            "2 bone-in chicken thighs",
+            "1 parsnip cubed",
+            "2 carrots chopped",
+            "1 cup Brussels sprouts halved",
+            "2 tbsp olive oil",
+            "Rosemary, thyme, garlic"
+          ],
+          "steps": [
+            "Preheat oven to 425\u00b0F. Toss vegetables in olive oil, salt, pepper, thyme. Note: Brussels should be halved and roasted until very soft.",
+            "Rub chicken with rosemary, garlic, salt, olive oil. Place over vegetables.",
+            "Roast 40 min until chicken is crispy at 165\u00b0F internal and veggies are very soft.",
+            "Rest 5 min. Ensure Brussels are fully cooked through before serving."
+          ]
+        },
+        {
+          "name": "Sirloin with Chimichurri & Roasted Broccolini",
+          "type": "dinner",
+          "cal": 760,
+          "protein": 68,
+          "carbs": 12,
+          "fat": 46,
+          "ingredients": [
+            "8 oz grass-fed sirloin",
+            "1 bunch broccolini",
+            "1 cup fresh parsley",
+            "3 tbsp olive oil",
+            "Red wine vinegar, garlic, red pepper flakes",
+            "S&P"
+          ],
+          "steps": [
+            "Blend chimichurri: parsley, garlic, olive oil, red wine vinegar, red pepper flakes, salt.",
+            "Bring steak to room temp. Season generously. Sear in cast iron 3\u20134 min each side medium-rare.",
+            "Roast broccolini at 425\u00b0F for 18 min until fully tender and stems are soft (not crispy-charred).",
+            "Rest steak 5 min, slice against grain, spoon chimichurri generously over top."
+          ]
+        },
+        {
+          "name": "Shrimp & Zucchini with Garlic Herb Sauce",
+          "type": "dinner",
+          "cal": 580,
+          "protein": 58,
+          "carbs": 14,
+          "fat": 28,
+          "ingredients": [
+            "10 oz shrimp peeled",
+            "3 medium zucchini spiralized then saut\u00e9ed",
+            "4 garlic cloves",
+            "3 tbsp ghee",
+            "Cherry tomatoes halved then cooked",
+            "Fresh basil, red pepper flakes, lemon"
+          ],
+          "steps": [
+            "Saut\u00e9 zucchini noodles in oil 5\u20136 min until quite soft (not al dente \u2014 needs to be fully cooked).",
+            "In separate pan, saut\u00e9 garlic in ghee until golden. Add shrimp, cook 2\u20133 min per side.",
+            "Add cherry tomatoes, cook until burst and soft, 3\u20134 min.",
+            "Combine all, finish with lemon and basil. Everything should be very tender."
+          ]
+        },
+        {
+          "name": "Slow-Braised Lamb with Roasted Garlic & Cauliflower",
+          "type": "dinner",
+          "cal": 720,
+          "protein": 62,
+          "carbs": 20,
+          "fat": 36,
+          "ingredients": [
+            "8 oz bone-in lamb shoulder",
+            "1 whole head garlic",
+            "1 cauliflower head florets",
+            "1 cup bone broth",
+            "Rosemary, thyme, bay leaf",
+            "Olive oil, S&P"
+          ],
+          "steps": [
+            "Brown lamb all sides in Dutch oven. Add garlic, herbs, bone broth.",
+            "Cover and braise at 325\u00b0F 2.5\u20133 hours until fork-tender and falling off bone.",
+            "Roast cauliflower at 425\u00b0F with olive oil 22 min until caramelized and fully soft.",
+            "Serve braised lamb over cauliflower. Squeeze roasted garlic over everything."
+          ]
+        },
+        {
+          "name": "Pork Tenderloin with Apple Fennel & Roasted Squash",
+          "type": "dinner",
+          "cal": 700,
+          "protein": 62,
+          "carbs": 26,
+          "fat": 28,
+          "ingredients": [
+            "8 oz pork tenderloin",
+            "1 delicata squash sliced",
+            "\u00bd apple peeled and cooked",
+            "\u00bd fennel bulb roasted",
+            "Olive oil, apple cider vinegar",
+            "Rosemary, Dijon (paleo), S&P"
+          ],
+          "steps": [
+            "Rub tenderloin with Dijon, rosemary, garlic. Sear 3 min per side then roast at 400\u00b0F 18\u201320 min.",
+            "Roast squash rings at 425\u00b0F 22 min until very soft.",
+            "Saut\u00e9 peeled apple and fennel together in olive oil until completely softened, 8\u201310 min.",
+            "Slice pork, serve with soft fennel-apple saut\u00e9 and roasted squash."
+          ]
+        },
+        {
+          "name": "Baked Cod with Roasted Tomatoes & Sweet Potato Mash",
+          "type": "dinner",
+          "cal": 620,
+          "protein": 60,
+          "carbs": 30,
+          "fat": 18,
+          "ingredients": [
+            "8 oz cod fillet",
+            "2 cups cherry tomatoes",
+            "1 large sweet potato",
+            "2 tbsp olive oil",
+            "Garlic, capers, fresh parsley",
+            "Lemon, S&P"
+          ],
+          "steps": [
+            "Roast tomatoes with garlic at 400\u00b0F 20 min until completely burst and jammy.",
+            "Steam or boil sweet potato until very soft. Mash with olive oil and S&P.",
+            "Season cod, bake at 400\u00b0F 14\u201316 min until flaky.",
+            "Plate mash, cod on top, spoon roasted tomatoes and capers over fish."
+          ]
+        },
+        {
+          "name": "Chicken Thigh Cacciatore (One-Pan)",
+          "type": "dinner",
+          "cal": 680,
+          "protein": 60,
+          "carbs": 20,
+          "fat": 32,
+          "ingredients": [
+            "2 bone-in chicken thighs",
+            "1 can crushed tomatoes (no sugar)",
+            "Bell peppers fully cooked",
+            "1 cup mushrooms",
+            "Garlic, rosemary, thyme",
+            "Olive oil, bone broth, olives"
+          ],
+          "steps": [
+            "Brown chicken thighs skin-side down in olive oil 5 min. Flip and sear 3 min.",
+            "Saut\u00e9 garlic, mushrooms, bell peppers in same pan 5 min until very soft.",
+            "Add crushed tomatoes, broth, herbs, olives. Return chicken.",
+            "Simmer covered 30 min until chicken is fall-off-bone tender and sauce is thick."
+          ]
+        },
+        {
+          "name": "Beef Stew with Root Vegetables (Slow Cooked)",
+          "type": "dinner",
+          "cal": 700,
+          "protein": 64,
+          "carbs": 30,
+          "fat": 28,
+          "ingredients": [
+            "7 oz beef chuck cubed",
+            "1 parsnip diced",
+            "2 carrots diced",
+            "1 cup bone broth",
+            "Celery root diced",
+            "Garlic, thyme, bay leaf",
+            "Tomato paste, coconut aminos"
+          ],
+          "steps": [
+            "Brown beef cubes in batches in hot oil. Set aside.",
+            "Saut\u00e9 garlic and vegetables 5 min. Add tomato paste, cook 2 min.",
+            "Return beef, add broth, coconut aminos, herbs. Bring to simmer.",
+            "Cover and cook low 2+ hours until beef and all vegetables are completely tender."
+          ]
+        },
+        {
+          "name": "Baked Chicken Breast with Roasted Beets & Cauli Mash",
+          "type": "dinner",
+          "cal": 640,
+          "protein": 64,
+          "carbs": 26,
+          "fat": 24,
+          "ingredients": [
+            "8 oz chicken breast",
+            "2 medium beets peeled and diced",
+            "1 head cauliflower",
+            "2 tbsp ghee",
+            "Garlic, thyme, S&P",
+            "Balsamic glaze (paleo, small amount)"
+          ],
+          "steps": [
+            "Roast diced beets at 400\u00b0F 30\u201335 min until completely fork-tender throughout.",
+            "Steam cauliflower, blend with ghee, garlic, and salt until silky smooth.",
+            "Season chicken, bake at 400\u00b0F 22\u201325 min until 165\u00b0F internal.",
+            "Plate mash, chicken, roasted beets. Drizzle tiny amount of balsamic glaze."
+          ]
+        },
+        {
+          "name": "Turkey & Sweet Potato Stuffed Bell Peppers",
+          "type": "dinner",
+          "cal": 620,
+          "protein": 58,
+          "carbs": 30,
+          "fat": 20,
+          "ingredients": [
+            "4 bell peppers",
+            "7 oz lean ground turkey",
+            "1 cup mashed sweet potato",
+            "\u00bc cup diced onion cooked soft",
+            "Garlic, cumin, paprika",
+            "Olive oil, S&P",
+            "Paleo marinara for topping"
+          ],
+          "steps": [
+            "Halve peppers, brush with oil. Roast cut-side down at 400\u00b0F 15 min until soft.",
+            "Brown turkey with cooked onion, garlic, cumin, paprika. Mix with mashed sweet potato.",
+            "Fill roasted pepper halves with turkey mixture. Top with marinara.",
+            "Return to oven 15 min until heated through."
+          ]
+        },
+        {
+          "name": "Lamb Chops with Minted Pea Pur\u00e9e & Roasted Carrots",
+          "type": "dinner",
+          "cal": 720,
+          "protein": 62,
+          "carbs": 20,
+          "fat": 38,
+          "ingredients": [
+            "2 lamb loin chops",
+            "1.5 cups frozen peas (cooked to pur\u00e9e)",
+            "3 large carrots roasted",
+            "Fresh mint",
+            "2 tbsp ghee",
+            "Garlic, rosemary, S&P"
+          ],
+          "steps": [
+            "Roast carrots at 400\u00b0F 25 min until completely tender.",
+            "Pur\u00e9e cooked peas with mint, a little ghee, salt, and pepper until very smooth.",
+            "Rub lamb with rosemary, garlic, S&P. Sear in hot ghee 3 min per side for medium.",
+            "Spoon pea pur\u00e9e onto plate, add carrots, top with lamb chops."
+          ]
+        }
+      ]
+    }
+  }
+}
